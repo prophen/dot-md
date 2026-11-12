@@ -51,14 +51,14 @@ export default function Landing() {
               >
                 Write yours
               </Link>
-              <Link to="/people" className="underline decoration-mark underline-offset-4 hover:text-mark">
-                Browse the directory
+              <Link to="/example" className="underline decoration-mark underline-offset-4 hover:text-mark">
+                Read an example · no sign-in
               </Link>
             </div>
           </div>
 
           <figure className="border border-border bg-card p-5 sm:p-6" aria-label="An example person.md file">
-            <figcaption className="mb-4 text-[11px] text-muted-foreground">rosa-lindqvist / person.md</figcaption>
+            <figcaption className="mb-4 text-[11px] text-muted-foreground">fictional example / person.md</figcaption>
             <div className="grid grid-cols-[1.75rem_1fr] gap-y-[3px] leading-[1.75]">
               {SAMPLE.map(([mark, text, kind], n) => (
                 <div key={n} className="contents">
@@ -84,7 +84,7 @@ export default function Landing() {
               ))}
             </div>
             <div className="mt-5 border-t border-dotted border-input pt-3 text-[11.5px] text-muted-foreground">
-              $ curl dot-md.app.space/rosa-lindqvist.md
+              <Link to="/example" className="underline underline-offset-4">Read the full example →</Link>
             </div>
           </figure>
         </section>
