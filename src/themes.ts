@@ -18,6 +18,11 @@
 
 export const THEMES = [
   {
+    id: 'source',
+    label: 'Source',
+    description: 'Uncoated paper, near-black ink, rust for markdown syntax.',
+  },
+  {
     id: 'slate',
     label: 'Slate',
     description: 'Neutral dark placeholder default. Replace with your own theme.',

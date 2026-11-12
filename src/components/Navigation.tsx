@@ -58,8 +58,8 @@ export default function Navigation() {
         to={item.path}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'px-3 py-1.5 text-sm',
-          active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+          'px-2 py-1.5 text-[12.5px]',
+          active ? 'text-foreground underline decoration-mark underline-offset-4' : 'text-muted-foreground hover:text-foreground',
         )}
       >
         {item.label}
@@ -70,9 +70,9 @@ export default function Navigation() {
   return (
     <>
       <nav data-testid="app-navigation" className="border-b border-border bg-background">
-        <div className="mx-auto flex h-12 max-w-7xl items-center gap-4 px-4">
-          <Link to="/home" className="text-sm font-semibold text-foreground">
-            {APP_NAME}
+        <div className="mx-auto flex h-12 max-w-6xl items-center gap-4 px-4 sm:px-6">
+          <Link to="/people" aria-label={APP_NAME} className="text-[13px] font-semibold text-foreground">
+            dot<span className="text-mark">.</span>md
           </Link>
 
           <div className="hidden items-center md:flex">{visibleNav.map(navLink)}</div>
@@ -82,9 +82,9 @@ export default function Navigation() {
           {!isLoaded ? null : isSignedIn && !profileReady ? (
             /* Signed in, profile still loading — skeleton pill, never the
                Sign in button (that would offer sign-in to a signed-in user). */
-            <div className="flex items-center gap-2 rounded-full border border-border bg-card/60 py-1 pl-1 pr-2.5">
-              <div className="h-6 w-6 animate-pulse rounded-full bg-muted" />
-              <div className="hidden h-4 w-20 animate-pulse rounded-md bg-muted sm:block" />
+            <div className="flex items-center gap-2 py-1">
+              <div className="h-5 w-5 animate-pulse bg-muted" />
+              <div className="hidden h-3.5 w-20 animate-pulse bg-muted sm:block" />
             </div>
           ) : isSignedIn && user ? (
             <DropdownMenu>
@@ -92,17 +92,17 @@ export default function Navigation() {
                 render={
                   <button
                     aria-label="Account menu"
-                    className="group flex items-center gap-2 rounded-full border border-border bg-card/60 py-1 pl-1 pr-2.5 text-sm transition-colors hover:bg-card"
+                    className="group flex items-center gap-2 py-1 text-[12.5px] text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    <Avatar className="h-6 w-6 ring-1 ring-inset ring-border">
+                    <Avatar className="h-5 w-5 rounded-none ring-1 ring-inset ring-border">
                       <AvatarImage src={user.imageUrl ?? undefined} referrerPolicy="no-referrer" />
-                      <AvatarFallback className="text-[11px]">
+                      <AvatarFallback className="rounded-none text-[10px]">
                         {(user.name?.[0] ?? user.email?.[0] ?? '?').toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <span
                       data-testid="nav-user-name"
-                      className="hidden max-w-[140px] truncate text-foreground sm:inline"
+                      className="hidden max-w-[140px] truncate sm:inline"
                     >
                       {user.name || user.email}
                     </span>
@@ -136,7 +136,7 @@ export default function Navigation() {
             <button
               data-testid="nav-sign-in-button"
               onClick={() => setShowAuthModal(true)}
-              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90"
+              className="border border-foreground px-2.5 py-1 text-[12.5px] text-foreground hover:bg-foreground hover:text-background"
             >
               Sign in
             </button>
