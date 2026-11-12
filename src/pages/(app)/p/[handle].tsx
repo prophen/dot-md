@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth, useQuery } from 'deepspace'
+import { ProfileSharing } from '../../../components/ProfileSharing'
 import { ProfileView } from '../../../components/ProfileView'
 import type { Profile } from '../../../schemas/profiles-schema'
 import { age, rawPath } from '../../../lib/profile'
@@ -29,7 +30,6 @@ export default function ProfilePage() {
   }, [handle])
   const ownRecord = records.find((r) => r.data.handle === handle && r.createdBy === userId)
   const record = ownRecord ?? (publicResult?.handle === handle ? publicResult.record : undefined)
-  const [copied, setCopied] = useState(false)
 
   if (!record && (publicResult?.handle !== handle || (userId && status === 'loading'))) {
     return <p className="mx-auto max-w-5xl px-4 py-14 text-muted-foreground sm:px-6">opening {handle}.md…</p>
@@ -52,22 +52,14 @@ export default function ProfilePage() {
   }
 
   const { data, updatedAt } = record
-  const origin = typeof window === 'undefined' ? '' : window.location.origin
-  const curl = `curl ${origin}${rawPath(data.handle)}`
   const modified = updatedAt ? age(updatedAt) : null
-
-  async function copy() {
-    await navigator.clipboard.writeText(curl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1600)
-  }
 
   return (
     <div className="mx-auto grid max-w-5xl gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[1fr_16rem]">
       <title>{`${data.name} · dot-md`}</title>
       {data.status !== 'published' && <meta name="robots" content="noindex" />}
       <meta name="description" content={data.tagline || `${data.name}'s person.md`} />
-      <link rel="alternate" type="text/markdown" href={rawPath(data.handle)} />
+      {data.status !== 'draft' && <link rel="alternate" type="text/markdown" href={rawPath(data.handle)} />}
 
       <article className="min-w-0">
         <p className="mb-5 text-[11px] text-muted-foreground">
@@ -78,18 +70,7 @@ export default function ProfilePage() {
       </article>
 
       <aside className="space-y-6 border-t border-border pt-6 text-[12px] lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-        <div>
-          <h2 className="mb-2 text-[11px] text-muted-foreground">for agents</h2>
-          <button
-            onClick={copy}
-            className="w-full border border-foreground px-2.5 py-1.5 text-left text-[11.5px] break-all hover:bg-foreground hover:text-background"
-          >
-            {copied ? 'copied' : curl}
-          </button>
-          <a href={rawPath(data.handle)} className="mt-2 inline-block text-muted-foreground underline underline-offset-2 hover:text-foreground">
-            open raw
-          </a>
-        </div>
+        <ProfileSharing key={`${data.handle}:${data.status}`} profile={data} />
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
           <dt className="text-muted-foreground">kind</dt>
           <dd>{data.kind}</dd>
