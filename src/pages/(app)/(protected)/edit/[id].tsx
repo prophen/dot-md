@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth, useMutations, useQuery } from 'deepspace'
 import { useToast } from '@/components/ui'
+import { OpportunityEditor } from '../../../../components/OpportunityEditor'
 import { SourceView } from '../../../../components/SourceView'
 import type { Profile } from '../../../../schemas/profiles-schema'
 import { summarize, touchLastUpdated } from '../../../../lib/profile'
@@ -110,10 +111,13 @@ export default function EditPage() {
         <p className="mt-2 text-muted-foreground">Publishing makes your file accessible to anyone with its URL. Directory listing is optional. Changes take effect when you save or publish.</p>
       </div>
 
+      <OpportunityEditor body={text} onChange={setBody} onError={(message) => error("Couldn’t update opportunities", message)} disabled={saving} />
+
       <div className="grid gap-6 lg:grid-cols-2">
         <label className="block">
           <span className="sr-only">Markdown</span>
           <textarea
+            aria-label="Markdown"
             value={text}
             onChange={(e) => setBody(e.target.value)}
             onKeyDown={(e) => {
