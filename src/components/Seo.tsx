@@ -57,11 +57,14 @@ export function Seo({
       <meta name="description" content={description} />
       {noindex ? <meta name="robots" content="noindex, nofollow" /> : null}
       {canonical ? <link rel="canonical" href={canonical} /> : null}
+      <meta property="og:site_name" content="dot-md" />
       <meta property="og:type" content={type} />
       {canonical ? <meta property="og:url" content={canonical} /> : null}
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       {image ? <meta property="og:image" content={image} /> : null}
+      {image ? <meta property="og:image:width" content="1200" /> : null}
+      {image ? <meta property="og:image:height" content="630" /> : null}
       <meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />

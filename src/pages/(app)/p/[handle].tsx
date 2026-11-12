@@ -51,7 +51,7 @@ export default function ProfilePage() {
 
       <article className="min-w-0">
         <p className="mb-5 text-[11px] text-muted-foreground">
-          <Link to="/people" className="hover:text-foreground">dot.md</Link> / {data.handle} / {data.kind === 'agent' ? 'agent.md' : 'person.md'}
+          <Link to="/people" className="hover:text-foreground">~/people</Link> / {data.handle} / {data.kind === 'agent' ? 'agent.md' : 'person.md'}
           {data.status === 'draft' && <span className="ml-2 text-mark">draft — only you can see this</span>}
         </p>
         <SourceView body={data.body} />

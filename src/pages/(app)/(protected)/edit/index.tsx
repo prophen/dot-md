@@ -139,7 +139,7 @@ function NewFile({ first }: { first: boolean }) {
       <label className="block">
         <span className="mb-1 block text-[11px] text-muted-foreground">handle — permanent</span>
         <span className="flex max-w-sm items-center border border-input bg-card focus-within:border-mark">
-          <span className="pl-2.5 text-muted-foreground">dot.md/</span>
+          <span className="pl-2.5 text-muted-foreground">{window.location.host}/</span>
           <input
             value={handle}
             onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
