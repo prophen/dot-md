@@ -97,6 +97,7 @@ function NewFile({ first }: { first: boolean }) {
         kind: starter.kind,
         body,
         status: 'draft',
+        origin: mode === 'paste' ? 'paste' : 'starter',
       })
       navigate(`/edit/${id}`)
     } catch (err) {

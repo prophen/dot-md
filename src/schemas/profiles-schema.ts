@@ -14,6 +14,9 @@ export type ProfileKind = 'person' | 'agent'
 // `published` retains the original listed state; `unlisted` is public by URL only.
 export type ProfileStatus = 'draft' | 'published' | 'unlisted'
 
+// `paste` drafts keep the name and tagline the author entered; they are never re-extracted from the body.
+export type ProfileOrigin = 'paste' | 'starter'
+
 export type Profile = {
   handle: string
   name: string
@@ -21,6 +24,7 @@ export type Profile = {
   kind: ProfileKind
   body: string
   status: ProfileStatus
+  origin?: ProfileOrigin
 }
 
 export const profilesSchema: CollectionSchema = {
@@ -36,6 +40,7 @@ export const profilesSchema: CollectionSchema = {
       storage: 'text',
       interpretation: { kind: 'select', options: ['draft', 'published', 'unlisted'] },
     },
+    { name: 'origin', storage: 'text', interpretation: { kind: 'select', options: ['paste', 'starter'] } },
   ],
   uniqueOn: ['handle'],
   visibilityField: { field: 'status', value: 'published' },

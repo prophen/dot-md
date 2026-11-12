@@ -47,10 +47,11 @@ export default function EditPage() {
   async function save(nextStatus = data.status) {
     if (nextStatus !== 'draft') nextStatus = wantsListing ? 'published' : 'unlisted'
     const next = touchLastUpdated(text)
-    const { name, tagline } = summarize(next)
+    // Pasted drafts keep the name and tagline the author entered; only starters are re-extracted.
+    const meta = data.origin === 'paste' ? { name: data.name, tagline: data.tagline } : summarize(next)
     setSaving(true)
     try {
-      await putConfirmed(id, { body: next, name: name || data.name, tagline, status: nextStatus })
+      await putConfirmed(id, { body: next, name: meta.name || data.name, tagline: meta.tagline, status: nextStatus })
       setBody(next)
       setListed(nextStatus === 'draft' && data.status === 'draft' ? listed : null)
       success(nextStatus !== 'draft' && data.status === 'draft' ? 'Published' : 'Saved')
