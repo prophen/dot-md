@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth, useMutations, useQuery } from 'deepspace'
 import { useToast } from '@/components/ui'
 import { SourceView } from '../../../../components/SourceView'
+import { useLocalPaste } from '../../../../lib/local-paste'
 import { PASTE_LIMIT, preparePastedDraft } from '../../../../lib/paste-draft'
 import { AgentAccess } from '../../../../components/AgentAccess'
 import { HANDLE_RE, type Profile } from '../../../../schemas/profiles-schema'
@@ -42,13 +43,13 @@ export default function EditIndexPage() {
         </ul>
       )}
 
-      <NewFile first={status === 'ready' && mine.length === 0} />
+      {userId && <NewFile key={userId} userId={userId} first={status === 'ready' && mine.length === 0} />}
       <AgentAccess />
     </div>
   )
 }
 
-function NewFile({ first }: { first: boolean }) {
+function NewFile({ first, userId }: { first: boolean; userId: string }) {
   const navigate = useNavigate()
   const { error } = useToast()
   const { ready, createConfirmed } = useMutations<Profile>('profiles')
@@ -57,13 +58,12 @@ function NewFile({ first }: { first: boolean }) {
   const [starterId, setStarterId] = useState<StarterId>('developer-advocate')
   const [busy, setBusy] = useState(false)
   const [mode, setMode] = useState<'paste' | 'starter'>('paste')
-  const [source, setSource] = useState('')
-  const [draft, setDraft] = useState<string | null>(null)
+  const { source, draft, update, clear, failed, clearFailed } = useLocalPaste(userId)
   const [message, setMessage] = useState('')
 
   function prepare() {
     try {
-      setDraft(preparePastedDraft(source))
+      update({ source, draft: preparePastedDraft(source) })
       setMessage('')
     } catch (err) {
       setMessage((err as Error).message)
@@ -98,6 +98,7 @@ function NewFile({ first }: { first: boolean }) {
         body,
         status: 'draft',
       })
+      if (!clear()) error('File created', "Couldn't clear the local copy. Clear this site's browser data to remove it.")
       navigate(`/edit/${id}`)
     } catch (err) {
       const msg = String(err)
@@ -133,24 +134,28 @@ function NewFile({ first }: { first: boolean }) {
             Resume text, a bio, or existing Markdown · up to 20,000 characters.
             Text only: no files, scraping, or rich-text layout conversion. HTML and unsupported Markdown remain literal text.
           </p>
+          <p role={failed ? 'alert' : undefined} className="text-[12px] text-muted-foreground">
+            {clearFailed ? "Couldn’t remove the local copy. Clear this site’s browser data to remove it." : failed ? "Local recovery is unavailable. Keep a copy before leaving." : 'Pasted text and review edits stay in this browser for your account. They are not published or synced.'}
+          </p>
+          {(source || draft !== null) && <button type="button" disabled={busy} onClick={() => { clear(); setMessage('') }} className="text-[12px] underline underline-offset-2">Discard local text</button>}
           {draft === null ? <>
             <label className="block">
               <span className="mb-1 block text-[11px] text-muted-foreground">Paste your text</span>
-              <textarea value={source} onChange={(e) => { setSource(e.target.value); setMessage('') }} rows={12}
+              <textarea value={source} onChange={(e) => { update({ source: e.target.value, draft: null }); setMessage('') }} rows={12}
                 aria-describedby="paste-count" disabled={busy}
                 className="w-full resize-y border border-input bg-card p-4 font-mono text-[13px] leading-[1.75] outline-none focus:border-mark" />
             </label>
-            <p id="paste-count" className="text-[11px] text-muted-foreground">{source.length.toLocaleString()} / 20,000 chars · Nothing is saved yet.</p>
+            <p id="paste-count" className="text-[11px] text-muted-foreground">{source.length.toLocaleString()} / 20,000 chars · Not saved to your profile.</p>
             <button type="button" onClick={prepare} className="border border-foreground px-3 py-1.5 hover:text-mark">Prepare draft</button>
           </> : <>
             <p className="text-[12px] text-muted-foreground">
               Review your draft. We copied your text, normalizing line endings only. No AI rewriting or fact extraction.
               Name and handle are entered by you, never extracted from the text. Add any missing role, dates, links, or contact details yourself; nothing is guessed.
-              Nothing is saved until you choose save draft. Leaving this page discards unsaved text.
+              Your profile is created only when you choose save draft.
             </p>
             <label className="block">
               <span className="mb-1 block text-[11px] text-muted-foreground">Draft Markdown</span>
-              <textarea value={draft} onChange={(e) => { setDraft(e.target.value); setMessage('') }} rows={16} disabled={busy}
+              <textarea value={draft} onChange={(e) => { update({ source, draft: e.target.value }); setMessage('') }} rows={16} disabled={busy}
                 className="w-full resize-y border border-input bg-card p-4 font-mono text-[13px] leading-[1.75] outline-none focus:border-mark" />
             </label>
             <p className="text-[11px] text-muted-foreground">{draft.length.toLocaleString()} / {PASTE_LIMIT.toLocaleString()} chars · Check facts and remove anything you don't want to share.</p>
@@ -158,7 +163,7 @@ function NewFile({ first }: { first: boolean }) {
               <summary className="cursor-pointer text-[12px] text-muted-foreground">preview</summary>
               <SourceView body={draft} className="mt-4" />
             </details>
-            <button type="button" disabled={busy} onClick={() => { setSource(draft); setDraft(null); setMessage('') }} className="text-[12px] underline underline-offset-2">Back to pasted text</button>
+            <button type="button" disabled={busy} onClick={() => { update({ source: draft, draft: null }); setMessage('') }} className="text-[12px] underline underline-offset-2">Back to pasted text</button>
           </>}
         </section>
       )}
