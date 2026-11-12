@@ -7,6 +7,13 @@ describe('profile presentation', () => {
   it('keeps old and unknown styles on Source view', () => {
     for (const value of [undefined, null, '', 'unknown', '<script>']) expect(profileStyle(value)).toBe('source')
   })
+  it('preserves section and subsection heading levels in every style', () => {
+    for (const style of PROFILE_STYLES) {
+      const html = renderToStaticMarkup(<ProfileView body={'## Selected work\n\n### Talk to the book'} style={style} />)
+      expect(html).toMatch(/<h2[^>]*>.*Selected work<\/h2>/)
+      expect(html).toMatch(/<h3[^>]*>.*Talk to the book<\/h3>/)
+    }
+  })
   it('renders the same supplied content safely in every style', () => {
     const body = '# Ada\n\n> Works with Postgres\n\n[unsafe](javascript:alert)\n<script>alert(1)</script>'
     for (const style of PROFILE_STYLES) {

@@ -36,8 +36,11 @@
 }
 .profile-view--registry .profile-view-label { font-family: 'Archivo', sans-serif; font-weight: 700; color: #ffd23f; border-bottom: 2px solid #ffd23f; padding-bottom: .8rem; }
 .profile-view--registry h1 { font-family: 'Archivo', sans-serif; font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; line-height: 1; background: #ffd23f; color: #111; padding: 1rem; margin: .5rem 0 1rem; letter-spacing: -.03em; }
-.profile-view--registry h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; border-top: 2px solid #f2f0e8; padding-top: .65rem; margin-top: .7rem; letter-spacing: .04em; }
+.profile-view--registry h2 { font-size: 16px; font-weight: 700; text-transform: uppercase; border-top: 2px solid #ffd23f; padding-top: .65rem; margin-top: .7rem; letter-spacing: .04em; }
 .profile-view--registry p { font-size: 16px; }
 .profile-view--registry p.font-mono { font-size: 14px; }
 .profile-view--registry a { text-decoration-color: #ffd23f; }
 .profile-view a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+
+.profile-view--registry h3 { font-family: 'Archivo', sans-serif; font-size: 15px; font-weight: 600; line-height: 1.4; color: #f2f0e8; text-transform: none; letter-spacing: 0; border: 0; margin: .8rem 0 .3rem; padding: 0; }
+.profile-view--field-guide h3 { font-family: 'Spectral', Georgia, serif; font-size: 18px; font-style: italic; font-weight: 600; color: #22301f; text-transform: none; margin: .6rem 0 .3rem; }
