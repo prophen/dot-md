@@ -22,6 +22,7 @@ export default function EditPage() {
 
   const [body, setBody] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [listed, setListed] = useState<boolean | null>(null)
   useEffect(() => {
     if (record && body === null) setBody(record.data.body)
   }, [record, body])
@@ -40,16 +41,19 @@ export default function EditPage() {
 
   const { data } = record
   const text = body ?? ''
-  const dirty = text !== data.body
+  const wantsListing = listed ?? data.status === 'published'
+  const dirty = text !== data.body || (data.status !== 'draft' && wantsListing !== (data.status === 'published'))
 
   async function save(nextStatus = data.status) {
+    if (nextStatus !== 'draft') nextStatus = wantsListing ? 'published' : 'unlisted'
     const next = touchLastUpdated(text)
     const { name, tagline } = summarize(next)
     setSaving(true)
     try {
       await putConfirmed(id, { body: next, name: name || data.name, tagline, status: nextStatus })
       setBody(next)
-      success(nextStatus === 'published' && data.status !== 'published' ? 'Published' : 'Saved')
+      setListed(nextStatus === 'draft' && data.status === 'draft' ? listed : null)
+      success(nextStatus !== 'draft' && data.status === 'draft' ? 'Published' : 'Saved')
     } catch (err) {
       error("Couldn't save", String(err))
     } finally {
@@ -77,9 +81,9 @@ export default function EditPage() {
         <span>
           {data.handle}.md{dirty && <span className="text-mark"> ●</span>}
         </span>
-        <span className={data.status === 'published' ? 'text-muted-foreground' : 'text-mark'}>{data.status}</span>
+        <span className={data.status !== 'draft' ? 'text-muted-foreground' : 'text-mark'}>{data.status === 'draft' ? 'draft' : data.status === 'published' ? 'published · listed' : 'published · unlisted'}</span>
         <span className="flex-1" />
-        {data.status === 'published' && (
+        {data.status !== 'draft' && (
           <Link to={`/p/${data.handle}`} className="text-muted-foreground underline underline-offset-2 hover:text-foreground">view</Link>
         )}
         <button
@@ -90,12 +94,20 @@ export default function EditPage() {
           save
         </button>
         <button
-          onClick={() => save(data.status === 'published' ? 'draft' : 'published')}
+          onClick={() => save(data.status !== 'draft' ? 'draft' : 'published')}
           disabled={!ready || saving}
           className="border border-foreground bg-foreground px-2.5 py-1 text-background hover:bg-transparent hover:text-foreground disabled:opacity-40"
         >
-          {data.status === 'published' ? 'unpublish' : 'publish'}
+          {data.status !== 'draft' ? 'unpublish' : 'publish'}
         </button>
+      </div>
+
+      <div className="mb-6 text-[12px]">
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={wantsListing} onChange={(e) => setListed(e.target.checked)} disabled={saving} />
+          List me in the directory
+        </label>
+        <p className="mt-2 text-muted-foreground">Publishing makes your file accessible to anyone with its URL. Directory listing is optional. Changes take effect when you save or publish.</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

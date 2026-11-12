@@ -1,5 +1,5 @@
 /**
- * The directory — an `ls` of every published file. Public: signed-out
+ * The directory — an `ls` of every explicitly listed file. Public: signed-out
  * visitors and agents can browse it.
  */
 

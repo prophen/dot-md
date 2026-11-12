@@ -3,7 +3,7 @@
  * /<handle>.md for agents.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth, useQuery } from 'deepspace'
 import { SourceView } from '../../../components/SourceView'
@@ -14,11 +14,29 @@ export default function ProfilePage() {
   const { handle = '' } = useParams()
   const { userId } = useAuth()
   const { records, status } = useQuery<Profile>('profiles', { where: { handle }, limit: 1 })
-  const record = records[0]
+  const [publicResult, setPublicResult] = useState<{ handle: string; record?: { data: Profile; updatedAt?: string }; error?: boolean } | null>(null)
+  useEffect(() => {
+    const controller = new AbortController()
+    fetch(`/api/public/profiles/${encodeURIComponent(handle)}`, { signal: controller.signal, cache: 'no-store' })
+      .then(async (res) => {
+        if (res.status === 404) return undefined
+        if (!res.ok) throw new Error('Could not load profile')
+        return await res.json() as { data: Profile; updatedAt?: string }
+      })
+      .then((record) => setPublicResult({ handle, record }))
+      .catch(() => { if (!controller.signal.aborted) setPublicResult({ handle, error: true }) })
+    return () => controller.abort()
+  }, [handle])
+  const ownRecord = records.find((r) => r.data.handle === handle && r.createdBy === userId)
+  const record = ownRecord ?? (publicResult?.handle === handle ? publicResult.record : undefined)
   const [copied, setCopied] = useState(false)
 
-  if (status === 'loading') {
+  if (!record && (publicResult?.handle !== handle || (userId && status === 'loading'))) {
     return <p className="mx-auto max-w-5xl px-4 py-14 text-muted-foreground sm:px-6">opening {handle}.md…</p>
+  }
+
+  if (!record && publicResult?.error) {
+    return <p className="mx-auto max-w-5xl px-4 py-14 text-destructive">Couldn't open this file. Reload to try again.</p>
   }
 
   if (!record) {
@@ -33,9 +51,10 @@ export default function ProfilePage() {
     )
   }
 
-  const { data, updatedAt, recordId, createdBy } = record
+  const { data, updatedAt } = record
   const origin = typeof window === 'undefined' ? '' : window.location.origin
   const curl = `curl ${origin}${rawPath(data.handle)}`
+  const modified = updatedAt ? age(updatedAt) : null
 
   async function copy() {
     await navigator.clipboard.writeText(curl)
@@ -46,6 +65,7 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto grid max-w-5xl gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[1fr_16rem]">
       <title>{`${data.name} · dot-md`}</title>
+      {data.status !== 'published' && <meta name="robots" content="noindex" />}
       <meta name="description" content={data.tagline || `${data.name}'s person.md`} />
       <link rel="alternate" type="text/markdown" href={rawPath(data.handle)} />
 
@@ -74,12 +94,12 @@ export default function ProfilePage() {
           <dt className="text-muted-foreground">kind</dt>
           <dd>{data.kind}</dd>
           <dt className="text-muted-foreground">modified</dt>
-          <dd>{age(updatedAt) === 'now' ? 'just now' : `${age(updatedAt)} ago`}</dd>
+          <dd>{modified === null ? 'unknown' : modified === 'now' ? 'just now' : `${modified} ago`}</dd>
           <dt className="text-muted-foreground">lines</dt>
           <dd>{data.body.trimEnd().split('\n').length}</dd>
         </dl>
-        {userId === createdBy && (
-          <Link to={`/edit/${recordId}`} className="inline-block text-mark underline underline-offset-2">
+        {ownRecord && (
+          <Link to={`/edit/${ownRecord.recordId}`} className="inline-block text-mark underline underline-offset-2">
             edit this file
           </Link>
         )}

@@ -61,7 +61,8 @@ export function buildProfileTools(executor: Executor, { userId, origin }: Profil
     handle: r.data.handle,
     name: r.data.name,
     summary: r.data.tagline,
-    status: r.data.status,
+    status: r.data.status === 'draft' ? 'draft' : 'published',
+    listed: r.data.status === 'published',
     updatedAt: r.updatedAt,
     page: `${origin}/p/${r.data.handle}`,
     raw: `${origin}${rawPath(r.data.handle)}`,
@@ -91,10 +92,12 @@ export function buildProfileTools(executor: Executor, { userId, origin }: Profil
     return record
   }
 
-  async function setStatus(handle: string, status: Profile['status']) {
+  async function setStatus(handle: string, status: 'draft' | 'published', listed?: boolean) {
     const record = await ownFile(handle)
-    await call(executor, 'records.update', { collection: 'profiles', recordId: record.recordId, data: { status } })
-    return { ...describe(record), status }
+    const nextStatus: Profile['status'] = status === 'draft' ? 'draft'
+      : (listed ?? record.data.status === 'published') ? 'published' : 'unlisted'
+    await call(executor, 'records.update', { collection: 'profiles', recordId: record.recordId, data: { status: nextStatus } })
+    return describe({ ...record, data: { ...record.data, status: nextStatus } })
   }
 
   return {
@@ -176,9 +179,9 @@ export function buildProfileTools(executor: Executor, { userId, origin }: Profil
     }),
 
     publish_file: tool({
-      description: 'Publish a file: it appears in the directory and at its public URLs. Confirm with the person first.',
-      inputSchema: z.object({ handle: handleSchema }),
-      execute: async ({ handle }) => setStatus(handle, 'published'),
+      description: 'Publish a file at its public URLs. New publications are unlisted by default. Set listed to true only if the person wants directory inclusion, or false to remove a listing. Omitting listed preserves an existing publication’s listing choice. Confirm with the person first.',
+      inputSchema: z.object({ handle: handleSchema, listed: z.boolean().optional().describe('Opt in to the public directory. Unlisted files remain accessible to anyone with the URL.') }),
+      execute: async ({ handle, listed }) => setStatus(handle, 'published', listed),
     }),
 
     unpublish_file: tool({
