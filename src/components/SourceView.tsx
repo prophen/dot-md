@@ -101,11 +101,12 @@ function Line({ text, continues }: { text: string; continues: boolean }) {
         </h1>
       )
     }
+    const Heading = level === 2 ? 'h2' : 'h3'
     return (
-      <h2 className={cn('font-mono font-medium', level === 2 ? 'text-[13px]' : 'text-[12.5px] text-muted-foreground')}>
+      <Heading className={cn('font-mono font-medium', level === 2 ? 'text-[13px]' : 'text-[12.5px] text-muted-foreground')}>
         {marker}
         {heading[2]}
-      </h2>
+      </Heading>
     )
   }
 
