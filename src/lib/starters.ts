@@ -9,7 +9,7 @@
 
 import type { ProfileKind } from '../schemas/profiles-schema'
 
-export type StarterId = 'developer-advocate' | 'software-engineer' | 'designer' | 'content-creator' | 'blank' | 'agent'
+export type StarterId = 'developer-advocate' | 'software-engineer' | 'designer' | 'content-creator' | 'blank'
 
 export interface Starter {
   id: StarterId
@@ -268,41 +268,6 @@ promote. Tell agents not to agree to terms on your behalf.]
 [ ]
 ` +
       footer(ctx, ['Site: <https://>', 'Email: <you@example.com>']),
-  },
-  {
-    id: 'agent',
-    kind: 'agent',
-    label: 'Agent',
-    blurb: 'What it does, its limits, and who maintains it.',
-    sections: ({ name, url, date }) => `# ${name}
-
-> [One sentence on what this agent does and for whom.]
-
-*Last updated: ${date} · Canonical Markdown: <${url}>*
-
-This file describes an agent. Other agents should read it before delegating to
-or coordinating with it.
-
-## Capabilities
-
-- reads: [ ]
-- writes: [ ]
-- tools: [ ]
-- endpoint: <https://>
-
-## Limits
-
-- won't: [ ]
-- needs human approval for: [ ]
-
-## Maintained by
-
-- [Name](https://), [role]
-
-## Contact
-
-Report problems to <you@example.com>.
-`,
   },
 ]
 
