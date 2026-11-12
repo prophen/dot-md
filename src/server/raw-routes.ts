@@ -91,15 +91,24 @@ export function registerRawRoutes(app: Hono<AppContext>): void {
   app.get('/p/:handle{[a-z0-9-]+}', async (c, next) => {
     const url = new URL(c.req.url)
     url.pathname = '/_spa'
-    const shell = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw))
+    // Drop client validators: a 304 for the shell would skip the no-store
+    // response below and let a browser reuse a page from before unpublish.
+    const reqHeaders = new Headers(c.req.raw.headers)
+    reqHeaders.delete('if-none-match')
+    reqHeaders.delete('if-modified-since')
+    reqHeaders.delete('if-match')
+    reqHeaders.delete('if-unmodified-since')
+    reqHeaders.delete('if-range')
+    const shell = await c.env.ASSETS.fetch(new Request(url.toString(), { method: 'GET', headers: reqHeaders }))
     if (!shell.ok) return next()
 
     const record = await findPublished(c.env, c.req.param('handle'))
-    if (!record) return next()
-
-    const html = (await shell.text())
-      .replace(/<title>[^<]*<\/title>/, '')
-      .replace('</head>', `  ${profileHead(record, url.origin)}\n  </head>`)
+    let html = await shell.text()
+    if (record) {
+      html = html
+        .replace(/<title>[^<]*<\/title>/, '')
+        .replace('</head>', `  ${profileHead(record, url.origin)}\n  </head>`)
+    }
     const headers = new Headers(shell.headers)
     // The shell's ETag names the generic page, not this profile's version of it.
     headers.delete('content-length')
