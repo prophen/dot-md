@@ -15,6 +15,7 @@ import { z } from 'zod/v4'
 import { AgentToolError } from 'deepspace/worker'
 import { HANDLE_RE, type Profile } from '../schemas/profiles-schema'
 import { localDate, rawPath, summarize, touchLastUpdated } from '../lib/profile'
+import { OPEN_TO, readOpportunities, writeOpportunities } from '../lib/opportunities'
 import { STARTERS, getStarter, type StarterId } from '../lib/starters'
 
 type Executor = (toolName: string, params: Record<string, unknown>) => Promise<unknown>
@@ -119,7 +120,7 @@ export function buildProfileTools(executor: Executor, { userId, origin }: Profil
       inputSchema: z.object({ handle: handleSchema }),
       execute: async ({ handle }) => {
         const record = await ownFile(handle)
-        return { ...describe(record), markdown: record.data.body }
+        return { ...describe(record), markdown: record.data.body, opportunities: readOpportunities(record.data.body) }
       },
     }),
 
@@ -175,6 +176,28 @@ export function buildProfileTools(executor: Executor, { userId, origin }: Profil
           data: { body, name: name || record.data.name, tagline },
         })
         return { ...describe({ ...record, data: { ...record.data, body, tagline } }), saved: true }
+      },
+    }),
+
+    update_opportunities: tool({
+      description: 'Replace optional opportunity preferences in your Markdown. Only set preferences the person explicitly chose; never infer them. Read the file first. All three fields are required: empty openTo and empty strings clear the section. Preserves other Markdown and publication/listing state. Refuses ambiguous or custom marked sections; use update_file to edit those directly.',
+      inputSchema: z.object({
+        handle: handleSchema,
+        openTo: z.array(z.enum(OPEN_TO)),
+        availability: z.string().regex(/^[^\r\n]*$/).describe('Optional single line; empty string clears it.'),
+        workPreferences: z.string().regex(/^[^\r\n]*$/).describe('Optional single line; empty string clears it.'),
+      }),
+      execute: async ({ handle, ...preferences }) => {
+        const record = await ownFile(handle)
+        let body: string
+        try { body = touchLastUpdated(writeOpportunities(record.data.body, preferences)) }
+        catch (error) { throw new AgentToolError('invalid_opportunities', (error as Error).message, 400) }
+        const { name, tagline } = summarize(body)
+        await call(executor, 'records.update', {
+          collection: 'profiles', recordId: record.recordId,
+          data: { body, name: name || record.data.name, tagline },
+        })
+        return { ...describe({ ...record, data: { ...record.data, body, name: name || record.data.name, tagline } }), saved: true, opportunities: readOpportunities(body) }
       },
     }),
 

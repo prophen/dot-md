@@ -1,0 +1,67 @@
+import { test, expect } from 'deepspace/testing'
+
+test('opportunity controls and raw edits share saved Markdown and publication privacy', async ({ users, browser }) => {
+  const [{ page }] = await users(1)
+  const handle = `prefs-${Date.now().toString(36)}`
+  const custom = '# __test-opportunities__\n\nBuilds tools.\n\n## Custom\nKeep this *exactly*.\n'
+  const visitor = await browser.newContext()
+  const anon = await visitor.newPage()
+  let editor = ''
+  try {
+    await page.goto('/edit')
+    await page.getByLabel('Paste your text').fill(custom)
+    await page.getByRole('button', { name: 'Prepare draft' }).click()
+    await page.getByRole('textbox', { name: 'name', exact: true }).fill('__test-opportunities__')
+    await page.getByRole('textbox', { name: /handle/ }).fill(handle)
+    await page.getByRole('button', { name: 'save draft', exact: true }).click()
+    await expect(page).toHaveURL(/\/edit\/[^/]+$/)
+    editor = page.url()
+    const markdown = page.getByRole('textbox', { name: 'Markdown', exact: true })
+    await expect(markdown).toHaveValue(custom)
+    for (const choice of ['jobs', 'contracts', 'collaboration', 'speaking', 'mentoring']) await expect(page.getByLabel(choice, { exact: true })).not.toBeChecked()
+    await page.getByLabel('mentoring', { exact: true }).check()
+    await page.getByLabel('Availability', { exact: true }).fill('From January')
+    await page.getByLabel('Work preferences', { exact: true }).fill('Remote')
+    const edited = await markdown.inputValue()
+    expect(edited.startsWith(custom)).toBe(true)
+    expect(edited).toContain('- Open to: mentoring')
+    await page.getByRole('button', { name: 'save', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'save', exact: true })).toBeDisabled()
+    await page.reload()
+    await expect(page.getByLabel('mentoring', { exact: true })).toBeChecked()
+    expect((await anon.request.get(`/${handle}.md`)).status()).toBe(404)
+    const search = async () => (await (await anon.request.get(`/api/public/search?query=${handle}+mentoring`)).json()).results
+    expect(await search()).toEqual([])
+    await page.getByRole('button', { name: 'publish', exact: true }).click()
+    await expect(page.getByText('published · unlisted', { exact: true })).toBeVisible()
+    expect(await (await anon.request.get(`/${handle}.md`)).text()).toBe(edited)
+    expect(await search()).toEqual([])
+    await anon.goto(`/p/${handle}`)
+    await expect(anon.getByRole('heading', { name: '## Opportunities', exact: true })).toBeVisible()
+    await expect(anon.getByText('- Open to: mentoring', { exact: true })).toBeVisible()
+    await page.getByLabel('List me in the directory').check()
+    await page.getByRole('button', { name: 'save', exact: true }).click()
+    await expect(page.getByText('published · listed', { exact: true })).toBeVisible()
+    expect(await search()).toHaveLength(1)
+    await markdown.fill(edited.replace('- Open to: mentoring', '- Open to: speaking'))
+    await expect(page.getByLabel('mentoring', { exact: true })).not.toBeChecked()
+    await expect(page.getByLabel('speaking', { exact: true })).toBeChecked()
+    await page.getByRole('button', { name: 'clear opportunities', exact: true }).click()
+    expect((await markdown.inputValue()).trimEnd()).toBe(custom.trimEnd())
+    await page.getByRole('button', { name: 'save', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'save', exact: true })).toBeDisabled()
+    await page.reload()
+    await expect(page.getByLabel('speaking', { exact: true })).not.toBeChecked()
+    await expect(page.getByLabel('Availability', { exact: true })).toHaveValue('')
+    expect(await search()).toEqual([])
+    expect(await (await anon.request.get(`/${handle}.md`)).text()).not.toContain('Opportunities')
+  } finally {
+    await visitor.close()
+    if (editor) {
+      page.on('dialog', (dialog) => dialog.accept())
+      await page.goto(editor)
+      await page.getByRole('button', { name: 'delete this file' }).click()
+      await expect(page).toHaveURL(/\/edit$/)
+    }
+  }
+})

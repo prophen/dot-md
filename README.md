@@ -74,3 +74,38 @@ DeepSpace CLI users can also discover with
 `search_profiles` schema with
 `npx deepspace agent invoke dot-md search_profiles --input '{"query":"sqlite"}' --json`.
 The CLI uses the existing DeepSpace login and app membership.
+
+### Optional opportunity preferences
+
+The editor offers jobs, contracts, collaboration, speaking and mentoring, plus
+single-line availability and work preferences. Nothing is selected for existing
+profiles, and prose is never interpreted as an opt-in. Preferences are stored
+only in the profile's Markdown, for example:
+
+```md
+<!-- dot-md:opportunities -->
+## Opportunities
+
+- Open to: contracts, mentoring
+- Availability: From January
+- Work preferences: Remote, async
+<!-- /dot-md:opportunities -->
+```
+
+Controls update this marked block; raw Markdown edits immediately update the
+controls. Clearing removes the block. All content outside it is preserved,
+including custom sections with the same heading. Keep custom prose outside the
+markers: incomplete, duplicate or unrecognized blocks disable the controls until
+you fix/remove the block in Markdown. Unmarked prose remains ordinary Markdown.
+
+Agents can use `read_file` and `update_opportunities` (handle, openTo,
+availability, workPreferences; all required), or edit the full text with
+`update_file`. Empty choices and empty strings clear preferences. Only record
+what the person explicitly chose. These tools retain ownership checks and never
+change publication or listing status. Saves remain explicit in the editor.
+
+The readable profile and raw URL show the same text; existing literal keyword
+search can find preferences only on listed profiles. This adds no matching,
+ranking or dedicated preference filters. Drafts remain private; unlisted files
+are accessible by URL but excluded from discovery. The 20,000-character file
+limit still applies and an oversized preference edit is refused, not truncated.
