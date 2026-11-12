@@ -29,7 +29,8 @@ test('starter → draft → publish → public page, directory, and raw file', a
     /^> .*$/m,
     '> Backend engineer working on payment systems. I optimize for boring, observable services.',
   )
-  await editor.fill(body)
+  const keyword = `bodyonly${Date.now()}`
+  await editor.fill(body + `\n\nProject: ${keyword}`)
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/2-editor.png`, fullPage: true })
   await expect(page.getByLabel('List me in the directory')).not.toBeChecked()
   await page.getByRole('button', { name: 'publish', exact: true }).click()
@@ -47,14 +48,16 @@ test('starter → draft → publish → public page, directory, and raw file', a
 
   await anon.goto('/people')
   const row = anon.getByRole('link', { name: new RegExp(`${handle}\\.md`) })
-  await expect(anon.getByRole('heading', { name: /~\/people ·/ })).toBeVisible()
+  await expect(anon.getByRole('heading', { name: /~\/people/ })).toBeVisible()
   await expect(row).toHaveCount(0)
+  await expect(anon.getByRole('status')).toContainText(/files?/)
   expect(await queryHandles(anon, anonSocket)).not.toContain(handle)
 
   let otherSocket = ''
   other.page.on('websocket', (ws) => { if (ws.url().includes('/ws/app:')) otherSocket = ws.url() })
   await other.page.goto('/people')
-  await expect(other.page.getByRole('heading', { name: /~\/people ·/ })).toBeVisible()
+  await expect(other.page.getByRole('heading', { name: /~\/people/ })).toBeVisible()
+  await expect(other.page.getByRole('status')).toContainText(/files?/)
   expect(await queryHandles(other.page, otherSocket)).not.toContain(handle)
   const publicJson = await anon.request.get(`/api/public/profiles/${handle}`)
   expect(publicJson.status()).toBe(200)
@@ -68,6 +71,12 @@ test('starter → draft → publish → public page, directory, and raw file', a
   await anon.reload()
   await expect(row).toContainText('Backend engineer working on payment systems')
   expect(await queryHandles(anon, anonSocket)).toContain(handle)
+  await anon.getByRole('searchbox').fill(keyword)
+  await expect(row).toBeVisible()
+  await expect(anon.getByText(`Project: ${keyword}`, { exact: false })).toBeVisible()
+  // The same public discovery contract applies to the signed-in author.
+  const ownerSearch = await page.request.get(`/api/public/search?query=${keyword}`)
+  expect((await ownerSearch.json()).results.map((r: { handle: string }) => r.handle)).toContain(handle)
 
   // Removing the listing keeps direct links working, but removes query access.
   await page.getByLabel('List me in the directory').uncheck()
@@ -76,7 +85,11 @@ test('starter → draft → publish → public page, directory, and raw file', a
   expect(await queryHandles(anon, anonSocket)).not.toContain(handle)
   expect(await queryHandles(other.page, otherSocket)).not.toContain(handle)
   await anon.reload()
+  await anon.getByRole('searchbox').fill(keyword)
+  await expect(anon.getByText('No listed profiles match all your keywords.')).toBeVisible()
   await expect(row).toHaveCount(0)
+  const unlistedSearch = await page.request.get(`/api/public/search?query=${keyword}`)
+  expect((await unlistedSearch.json()).results).toEqual([])
   if (SHOTS) await anon.screenshot({ path: `${SHOTS}/4-directory.png`, fullPage: true })
 
   const raw = await anon.request.get(`/${handle}.md`)
