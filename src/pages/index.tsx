@@ -25,7 +25,7 @@ export default function Landing() {
       <div data-testid="static-landing" className="mx-auto max-w-5xl px-4 sm:px-6">
         <header className="flex h-12 items-center justify-between">
           <span className="text-[13px] font-semibold">
-            dot<span className="text-mark">.</span>md
+            <span className="text-mark">.</span>md
           </span>
           <Link to="/people" className="text-[12.5px] text-muted-foreground hover:text-foreground">
             ~/people
@@ -58,7 +58,7 @@ export default function Landing() {
           </div>
 
           <figure className="border border-border bg-card p-5 sm:p-6" aria-label="An example person.md file">
-            <figcaption className="mb-4 text-[11px] text-muted-foreground">dot.md / rosa-lindqvist / person.md</figcaption>
+            <figcaption className="mb-4 text-[11px] text-muted-foreground">rosa-lindqvist / person.md</figcaption>
             <div className="grid grid-cols-[1.75rem_1fr] gap-y-[3px] leading-[1.75]">
               {SAMPLE.map(([mark, text, kind], n) => (
                 <div key={n} className="contents">
@@ -84,7 +84,7 @@ export default function Landing() {
               ))}
             </div>
             <div className="mt-5 border-t border-dotted border-input pt-3 text-[11.5px] text-muted-foreground">
-              $ curl dot.md/rosa-lindqvist.md
+              $ curl dot-md.app.space/rosa-lindqvist.md
             </div>
           </figure>
         </section>
@@ -112,7 +112,7 @@ export default function Landing() {
         </section>
 
         <footer className="border-t border-border py-6 text-[11.5px] text-muted-foreground">
-          dot.md — plain-text profiles for people and the agents that work with them.
+          <span className="text-mark">.</span>md — plain-text profiles for people and the agents that work with them.
         </footer>
       </div>
     </>

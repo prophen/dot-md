@@ -20,7 +20,7 @@ export default function EditIndexPage() {
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
       <title>Your files · dot-md</title>
       <h1 className="mb-6 border-b border-border pb-3 text-[12px] tracking-wide text-muted-foreground">
-        ~/you{status === 'ready' && <> · {mine.length} {mine.length === 1 ? 'file' : 'files'}</>}
+        your files{status === 'ready' && <> · {mine.length}</>}
       </h1>
 
       {status === 'ready' && mine.length > 0 && (
@@ -139,7 +139,7 @@ function NewFile({ first }: { first: boolean }) {
       <label className="block">
         <span className="mb-1 block text-[11px] text-muted-foreground">handle — permanent</span>
         <span className="flex max-w-sm items-center border border-input bg-card focus-within:border-mark">
-          <span className="pl-2.5 text-muted-foreground">dot.md/</span>
+          <span className="pl-2.5 text-muted-foreground">{window.location.host}/</span>
           <input
             value={handle}
             onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}

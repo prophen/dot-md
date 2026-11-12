@@ -72,7 +72,7 @@ export default function Navigation() {
       <nav data-testid="app-navigation" className="border-b border-border bg-background">
         <div className="mx-auto flex h-12 max-w-6xl items-center gap-4 px-4 sm:px-6">
           <Link to="/people" aria-label={APP_NAME} className="text-[13px] font-semibold text-foreground">
-            dot<span className="text-mark">.</span>md
+            <span className="text-mark">.</span>md
           </Link>
 
           <div className="hidden items-center md:flex">{visibleNav.map(navLink)}</div>

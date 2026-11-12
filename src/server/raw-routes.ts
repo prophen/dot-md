@@ -1,36 +1,78 @@
 /**
- * GET /<handle>.md — a published profile as plain markdown, for agents.
+ * Public routes that read published profiles on the server:
  *
- * Reads the record room with RBAC off (the same channel server actions use),
- * so this route is the access check: only `status: 'published'` rows leave.
+ *   GET /<handle>.md   the file itself, as plain markdown, for agents.
+ *   GET /p/<handle>    the app shell with that profile's title, description
+ *                      and Open Graph tags stamped in, so link previews and
+ *                      crawlers that don't run JavaScript see who it is.
+ *
+ * Both read the record room with RBAC off (the same channel server actions
+ * use), so these routes are the access check: only `status: 'published'`
+ * rows leave.
  */
 
 import type { Hono } from 'hono'
-import type { AppContext } from '../../worker.js'
+import type { AppContext, Env } from '../../worker.js'
+
+interface PublishedProfile {
+  data: { handle: string; name: string; tagline?: string; body: string }
+  updatedAt?: string
+}
+
+async function findPublished(env: Env, handle: string): Promise<PublishedProfile | undefined> {
+  const stub = env.RECORD_ROOMS.get(env.RECORD_ROOMS.idFromName(`app:${env.DEEPSPACE_APP_ID}`))
+  const res = await stub.fetch(
+    new Request('https://internal/api/tools/execute', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': env.OWNER_USER_ID,
+        'X-App-Action': 'true',
+      },
+      body: JSON.stringify({
+        tool: 'records.query',
+        params: { collection: 'profiles', where: { handle, status: 'published' }, limit: 1 },
+      }),
+    }),
+  )
+  const result = (await res.json()) as { success: boolean; data?: { records: PublishedProfile[] } }
+  return result.success ? result.data?.records[0] : undefined
+}
+
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]!)
+
+/** The tags src/components/Seo.tsx would render, for one profile. */
+function profileHead(profile: PublishedProfile, origin: string): string {
+  const { handle, name, tagline } = profile.data
+  const title = escapeHtml(`${name} · dot-md`)
+  const description = escapeHtml(tagline || `${name}'s person.md — readable by people, fetchable by agents.`)
+  const url = escapeHtml(`${origin}/p/${handle}`)
+  const image = escapeHtml(`${origin}/og.png`)
+  return [
+    `<title>${title}</title>`,
+    `<meta name="description" content="${description}" />`,
+    `<link rel="canonical" href="${url}" />`,
+    `<link rel="alternate" type="text/markdown" href="${escapeHtml(`${origin}/${handle}.md`)}" />`,
+    `<meta property="og:site_name" content="dot-md" />`,
+    `<meta property="og:type" content="profile" />`,
+    `<meta property="og:url" content="${url}" />`,
+    `<meta property="og:title" content="${title}" />`,
+    `<meta property="og:description" content="${description}" />`,
+    `<meta property="og:image" content="${image}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${title}" />`,
+    `<meta name="twitter:description" content="${description}" />`,
+    `<meta name="twitter:image" content="${image}" />`,
+  ].join('\n    ')
+}
 
 export function registerRawRoutes(app: Hono<AppContext>): void {
   app.get('/:file{[a-z0-9-]+\\.md}', async (c) => {
     const handle = c.req.param('file').slice(0, -3)
-    const stub = c.env.RECORD_ROOMS.get(c.env.RECORD_ROOMS.idFromName(`app:${c.env.DEEPSPACE_APP_ID}`))
-    const res = await stub.fetch(
-      new Request('https://internal/api/tools/execute', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': c.env.OWNER_USER_ID,
-          'X-App-Action': 'true',
-        },
-        body: JSON.stringify({
-          tool: 'records.query',
-          params: { collection: 'profiles', where: { handle, status: 'published' }, limit: 1 },
-        }),
-      }),
-    )
-    const result = (await res.json()) as {
-      success: boolean
-      data?: { records: Array<{ data: { body: string }; updatedAt?: string }> }
-    }
-    const record = result.success ? result.data?.records[0] : undefined
+    const record = await findPublished(c.env, handle)
     if (!record) {
       return c.text(`${handle}.md: No such file\n`, 404, { 'Content-Type': 'text/plain; charset=utf-8' })
     }
@@ -41,5 +83,25 @@ export function registerRawRoutes(app: Hono<AppContext>): void {
     }
     if (record.updatedAt) headers['Last-Modified'] = new Date(record.updatedAt).toUTCString()
     return c.body(record.data.body.endsWith('\n') ? record.data.body : `${record.data.body}\n`, 200, headers)
+  })
+
+  // Same shell lookup as registerStaticRoutes' fallback; anything unexpected
+  // falls through to it, so this route can only add tags, never break a page.
+  app.get('/p/:handle{[a-z0-9-]+}', async (c, next) => {
+    const url = new URL(c.req.url)
+    url.pathname = '/_spa'
+    const shell = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw))
+    if (!shell.ok) return next()
+
+    const record = await findPublished(c.env, c.req.param('handle'))
+    if (!record) return next()
+
+    const html = (await shell.text())
+      .replace(/<title>[^<]*<\/title>/, '')
+      .replace('</head>', `  ${profileHead(record, url.origin)}\n  </head>`)
+    const headers = new Headers(shell.headers)
+    headers.delete('content-length')
+    headers.set('Content-Type', 'text/html; charset=utf-8')
+    return new Response(html, { status: 200, headers })
   })
 }
