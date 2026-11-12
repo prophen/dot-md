@@ -146,12 +146,11 @@ function NewFile({ first, userId }: { first: boolean; userId: string }) {
                 className="w-full resize-y border border-input bg-card p-4 font-mono text-[13px] leading-[1.75] outline-none focus:border-mark" />
             </label>
             <p id="paste-count" className="text-[11px] text-muted-foreground">{source.length.toLocaleString()} / 20,000 chars · Not saved to your profile.</p>
-            <button type="button" onClick={prepare} className="border border-foreground px-3 py-1.5 hover:text-mark">Prepare draft</button>
+            <button type="button" onClick={prepare} className="border border-foreground px-3 py-1.5 hover:text-mark">Review pasted text</button>
           </> : <>
             <p className="text-[12px] text-muted-foreground">
-              Review your draft. We copied your text, normalizing line endings only. No AI rewriting or fact extraction.
-              Name and handle are entered by you, never extracted from the text. Add any missing role, dates, links, or contact details yourself; nothing is guessed.
-              Your profile is created only when you choose save draft.
+              Review and edit your text below. Only line endings have changed; no facts are added or rewritten.
+              Enter your name and handle, then choose save draft to create a private profile. Publishing is a separate step.
             </p>
             <label className="block">
               <span className="mb-1 block text-[11px] text-muted-foreground">Draft Markdown</span>

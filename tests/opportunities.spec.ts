@@ -10,7 +10,7 @@ test('opportunity controls and raw edits share saved Markdown and publication pr
   try {
     await page.goto('/edit')
     await page.getByLabel('Paste your text').fill(custom)
-    await page.getByRole('button', { name: 'Prepare draft' }).click()
+    await page.getByRole('button', { name: 'Review pasted text' }).click()
     await page.getByRole('textbox', { name: 'name', exact: true }).fill('__test-opportunities__')
     await page.getByRole('textbox', { name: /handle/ }).fill(handle)
     await page.getByRole('button', { name: 'save draft', exact: true }).click()

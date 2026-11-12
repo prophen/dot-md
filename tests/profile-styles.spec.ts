@@ -7,7 +7,7 @@ test('profile styles save independently of Markdown and publication', async ({ u
   const body = '# Style Tester\n\n> A profile with the same words in every style.\n\n## Work\n\n- Postgres\n\nLast updated: 2020-01-01\n'
   await page.goto('/edit')
   await page.getByLabel('Paste your text').fill(body)
-  await page.getByRole('button', { name: 'Prepare draft' }).click()
+  await page.getByRole('button', { name: 'Review pasted text' }).click()
   await page.getByRole('textbox', { name: 'name', exact: true }).fill('Style Tester')
   await page.getByRole('textbox', { name: /handle/ }).fill(handle)
   await page.getByRole('button', { name: 'save draft', exact: true }).click()
