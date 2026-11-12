@@ -7,6 +7,8 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth, useMutations, useQuery } from 'deepspace'
 import { useToast } from '@/components/ui'
+import { SourceView } from '../../../../components/SourceView'
+import { PASTE_LIMIT, preparePastedDraft } from '../../../../lib/paste-draft'
 import { AgentAccess } from '../../../../components/AgentAccess'
 import { HANDLE_RE, type Profile } from '../../../../schemas/profiles-schema'
 import { age, localDate, rawPath } from '../../../../lib/profile'
@@ -54,16 +56,36 @@ function NewFile({ first }: { first: boolean }) {
   const [name, setName] = useState('')
   const [starterId, setStarterId] = useState<StarterId>('developer-advocate')
   const [busy, setBusy] = useState(false)
+  const [mode, setMode] = useState<'paste' | 'starter'>('paste')
+  const [source, setSource] = useState('')
+  const [draft, setDraft] = useState<string | null>(null)
+  const [message, setMessage] = useState('')
+
+  function prepare() {
+    try {
+      setDraft(preparePastedDraft(source))
+      setMessage('')
+    } catch (err) {
+      setMessage((err as Error).message)
+    }
+  }
 
   const handleOk = HANDLE_RE.test(handle)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
-    if (!handleOk || !name.trim()) return
+    if (busy || !ready || !handleOk || !name.trim() || (mode === 'paste' && draft === null)) return
+    if (mode === 'paste') {
+      try { preparePastedDraft(draft ?? '') } catch (err) {
+        setMessage((err as Error).message)
+        return
+      }
+    }
     setBusy(true)
     try {
       const starter = getStarter(starterId)
-      const body = starter.sections({
+      setMessage('')
+      const body = mode === 'paste' ? preparePastedDraft(draft ?? '') : starter.sections({
         name: name.trim(),
         url: `${window.location.origin}${rawPath(handle)}`,
         date: localDate(),
@@ -79,6 +101,7 @@ function NewFile({ first }: { first: boolean }) {
       navigate(`/edit/${id}`)
     } catch (err) {
       const msg = String(err)
+      setMessage(msg.includes('Duplicate') ? `${handle}.md is taken. Try another handle; your draft is still here.` : "Couldn't save the draft. Your text is still here. Check your connection and try again.")
       error(
         msg.includes('Duplicate') ? `${handle}.md is taken` : "Couldn't create the file",
         msg.includes('Duplicate') ? 'Handles are first come, first served. Try another.' : msg,
@@ -94,12 +117,54 @@ function NewFile({ first }: { first: boolean }) {
       </h2>
       {first && (
         <p className="max-w-prose font-serif text-[16px] text-muted-foreground">
-          A plain markdown file about you, at a URL any agent can fetch. Pick a starter and a handle; the
-          file stays a draft until you publish it.
+          A plain markdown file about you, at a URL any agent can fetch. Paste what you already have, or pick a starter. Review your file before saving; it
+          stays a draft until you publish it.
         </p>
       )}
 
-      <fieldset>
+      <div className="flex gap-4 text-[12px]" aria-label="Starting point">
+        <button type="button" aria-pressed={mode === 'paste'} disabled={busy} onClick={() => { setMode('paste'); setMessage('') }} className="underline underline-offset-4 aria-pressed:text-mark">Paste existing text</button>
+        <button type="button" aria-pressed={mode === 'starter'} disabled={busy} onClick={() => { setMode('starter'); setMessage('') }} className="underline underline-offset-4 aria-pressed:text-mark">Use a starter</button>
+      </div>
+
+      {mode === 'paste' && (
+        <section className="space-y-3" aria-label="Paste to draft">
+          <p className="text-[12px] text-muted-foreground">
+            Resume text, a bio, or existing Markdown · up to 20,000 characters.
+            Text only: no files, scraping, or rich-text layout conversion. HTML and unsupported Markdown remain literal text.
+          </p>
+          {draft === null ? <>
+            <label className="block">
+              <span className="mb-1 block text-[11px] text-muted-foreground">Paste your text</span>
+              <textarea value={source} onChange={(e) => { setSource(e.target.value); setMessage('') }} rows={12}
+                aria-describedby="paste-count" disabled={busy}
+                className="w-full resize-y border border-input bg-card p-4 font-mono text-[13px] leading-[1.75] outline-none focus:border-mark" />
+            </label>
+            <p id="paste-count" className="text-[11px] text-muted-foreground">{source.length.toLocaleString()} / 20,000 chars · Nothing is saved yet.</p>
+            <button type="button" onClick={prepare} className="border border-foreground px-3 py-1.5 hover:text-mark">Prepare draft</button>
+          </> : <>
+            <p className="text-[12px] text-muted-foreground">
+              Review your draft. We copied your text, normalizing line endings only. No AI rewriting or fact extraction.
+              Name and handle are entered by you, never extracted from the text. Add any missing role, dates, links, or contact details yourself; nothing is guessed.
+              Nothing is saved until you choose save draft. Leaving this page discards unsaved text.
+            </p>
+            <label className="block">
+              <span className="mb-1 block text-[11px] text-muted-foreground">Draft Markdown</span>
+              <textarea value={draft} onChange={(e) => { setDraft(e.target.value); setMessage('') }} rows={16} disabled={busy}
+                className="w-full resize-y border border-input bg-card p-4 font-mono text-[13px] leading-[1.75] outline-none focus:border-mark" />
+            </label>
+            <p className="text-[11px] text-muted-foreground">{draft.length.toLocaleString()} / {PASTE_LIMIT.toLocaleString()} chars · Check facts and remove anything you don't want to share.</p>
+            <details className="border-y border-dotted border-input py-3">
+              <summary className="cursor-pointer text-[12px] text-muted-foreground">preview</summary>
+              <SourceView body={draft} className="mt-4" />
+            </details>
+            <button type="button" disabled={busy} onClick={() => { setSource(draft); setDraft(null); setMessage('') }} className="text-[12px] underline underline-offset-2">Back to pasted text</button>
+          </>}
+        </section>
+      )}
+      {message && <p role="alert" className="text-[12px] text-destructive">{message}</p>}
+
+      {mode === 'starter' && <fieldset disabled={busy}>
         <legend className="mb-2 text-[11px] text-muted-foreground">starter</legend>
         <div className="grid max-w-2xl border-t border-dotted border-input sm:grid-cols-2 sm:gap-x-6">
           {STARTERS.map((s) => (
@@ -125,13 +190,14 @@ function NewFile({ first }: { first: boolean }) {
         <p className="mt-2 max-w-2xl text-[11.5px] text-muted-foreground">
           Modeled on <a href="https://lauren.md" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">lauren.md</a>: a summary, rules for the agent reading it, then sections it can quote. Replace anything in [brackets].
         </p>
-      </fieldset>
+      </fieldset>}
 
       <label className="block">
         <span className="mb-1 block text-[11px] text-muted-foreground">name</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
+          disabled={busy}
           maxLength={120}
           required
           className="w-full max-w-sm border border-input bg-card px-2.5 py-1.5 font-serif text-[16px] outline-none focus:border-mark"
@@ -145,6 +211,7 @@ function NewFile({ first }: { first: boolean }) {
           <input
             value={handle}
             onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+            disabled={busy}
             maxLength={40}
             required
             aria-invalid={handle.length > 0 && !handleOk}
@@ -161,10 +228,10 @@ function NewFile({ first }: { first: boolean }) {
 
       <button
         type="submit"
-        disabled={!ready || busy || !handleOk || !name.trim()}
+        disabled={!ready || busy || !handleOk || !name.trim() || (mode === 'paste' && draft === null)}
         className="border border-foreground bg-foreground px-3 py-1.5 text-background hover:bg-transparent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {busy ? 'creating…' : `touch ${handle || 'handle'}.md`}
+        {busy ? 'creating…' : mode === 'paste' ? 'save draft' : `touch ${handle || 'handle'}.md`}
       </button>
     </form>
   )
