@@ -9,24 +9,7 @@ import { useAuth, useMutations, useQuery } from 'deepspace'
 import { useToast } from '@/components/ui'
 import { SourceView } from '../../../../components/SourceView'
 import type { Profile } from '../../../../schemas/profiles-schema'
-import { touchLastUpdated } from '../../../../lib/profile'
-
-/** Name from the first `# ` line; tagline from the first `> ` summary or
- *  paragraph after it, skipping unfilled [bracket] prompts. */
-function summarize(body: string): { name?: string; tagline: string } {
-  const lines = body.split('\n')
-  const h1 = lines.findIndex((l) => /^# \S/.test(l))
-  const name = h1 >= 0 ? lines[h1].slice(2).trim() : undefined
-  const rest = lines.slice(h1 + 1)
-  const start = rest.findIndex((l) => l.trim() && !/^(#|[-*|] |\||<!--)/.test(l))
-  const block: string[] = []
-  for (const l of start >= 0 ? rest.slice(start) : []) {
-    if (!l.trim()) break
-    block.push(l.replace(/^> ?/, '').trim())
-  }
-  const text = block.join(' ')
-  return { name, tagline: text.startsWith('[') ? '' : text.slice(0, 200) }
-}
+import { summarize, touchLastUpdated } from '../../../../lib/profile'
 
 export default function EditPage() {
   const { id = '' } = useParams()

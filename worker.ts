@@ -32,6 +32,7 @@ import {
   registerStaticRoutes,
   resolveAuth,
 } from './src/server/http-routes.js'
+import { registerMcpRoutes } from './src/server/mcp-routes.js'
 import { registerRawRoutes } from './src/server/raw-routes.js'
 import { registerRealtimeRoutes } from './src/server/realtime-routes.js'
 
@@ -144,6 +145,7 @@ registerAgent(app, {
   tools: buildTools,
   inApp: schemas.some((schema) => schema.name === AI_CHATS_SCHEMA.name),
 })
+registerMcpRoutes(app)
 registerPlatformProxyRoutes(app)
 registerRawRoutes(app)
 registerStaticRoutes(app)

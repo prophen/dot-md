@@ -7,6 +7,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth, useMutations, useQuery } from 'deepspace'
 import { useToast } from '@/components/ui'
+import { AgentAccess } from '../../../../components/AgentAccess'
 import { HANDLE_RE, type Profile } from '../../../../schemas/profiles-schema'
 import { age, localDate, rawPath } from '../../../../lib/profile'
 import { STARTERS, getStarter, type StarterId } from '../../../../lib/starters'
@@ -40,6 +41,7 @@ export default function EditIndexPage() {
       )}
 
       <NewFile first={status === 'ready' && mine.length === 0} />
+      <AgentAccess />
     </div>
   )
 }
