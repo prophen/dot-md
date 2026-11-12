@@ -6,13 +6,13 @@ export default function NotFound() {
     <div className="flex min-h-screen flex-col items-center justify-center text-center px-4">
       <title>{`Not found · ${APP_NAME}`}</title>
       <meta name="robots" content="noindex" />
-      <h1 className="text-4xl font-bold text-foreground mb-2">404</h1>
-      <p className="text-muted-foreground mb-6">Page not found</p>
+      <h1 className="mb-2 font-serif text-4xl font-semibold text-foreground">404</h1>
+      <p className="mb-6 text-muted-foreground">No such file or directory</p>
       <Link
-        to="/home"
-        className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+        to="/people"
+        className="border border-foreground px-3 py-1.5 text-[12.5px] hover:bg-foreground hover:text-background"
       >
-        Go home
+        Back to ~/people
       </Link>
     </div>
   )

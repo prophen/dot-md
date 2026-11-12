@@ -44,3 +44,36 @@
   --color-shell: #fafafa;
   --color-shell-panel: #ffffff;
 }
+
+/* Source — dot-md's theme. A markdown file on uncoated paper: near-black ink,
+ * rust reserved for markdown syntax and the one live element on a page.
+ * Square corners; rules instead of shadows. */
+[data-theme="source"] {
+  color-scheme: light;
+  --color-background: #f4f1ea;
+  --color-foreground: #1b1a17;
+  --color-card: #faf8f3;
+  --color-card-foreground: #1b1a17;
+  --color-popover: #faf8f3;
+  --color-popover-foreground: #1b1a17;
+  --color-primary: #1b1a17;
+  --color-primary-foreground: #f4f1ea;
+  --color-secondary: #ebe6da;
+  --color-secondary-foreground: #1b1a17;
+  --color-muted: #ebe6da;
+  --color-muted-foreground: #6b6352;
+  --color-accent: #e6e0d1;
+  --color-accent-foreground: #1b1a17;
+  --color-destructive: #b42318;
+  --color-destructive-foreground: #f4f1ea;
+  --color-border: #d9d3c4;
+  --color-input: #c9c1ad;
+  --color-ring: #c2410c;
+  --color-mark: #c2410c;
+  --color-faint: #b9b19e;
+  --radius: 0.125rem;
+  --shadow-card: none;
+  --shadow-card-hover: none;
+  --color-shell: #f4f1ea;
+  --color-shell-panel: #faf8f3;
+}

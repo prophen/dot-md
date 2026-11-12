@@ -32,6 +32,7 @@ import {
   registerStaticRoutes,
   resolveAuth,
 } from './src/server/http-routes.js'
+import { registerRawRoutes } from './src/server/raw-routes.js'
 import { registerRealtimeRoutes } from './src/server/realtime-routes.js'
 
 // Dynamic deploy reads this manifest to create the app's DO bindings.
@@ -144,6 +145,7 @@ registerAgent(app, {
   inApp: schemas.some((schema) => schema.name === AI_CHATS_SCHEMA.name),
 })
 registerPlatformProxyRoutes(app)
+registerRawRoutes(app)
 registerStaticRoutes(app)
 
 // Hono registers ONE error handler (last onError wins), and its default is
