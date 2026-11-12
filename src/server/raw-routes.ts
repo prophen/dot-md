@@ -6,17 +6,18 @@
  *                      and Open Graph tags stamped in, so link previews and
  *                      crawlers that don't run JavaScript see who it is.
  *
- * Both read the record room with RBAC off (the same channel server actions
- * use), so these routes are the access check: only `status: 'published'`
- * rows leave. Both are `no-store`: a cached copy would outlive an unpublish
+ * These routes read the record room with RBAC off (the same channel server actions
+ * use), so these routes are the access check: only `published` or `unlisted`
+ * rows leave. Responses are `no-store`: a cached copy would outlive an unpublish
  * or delete, and the check has to run on every request to mean anything.
  */
 
 import type { Hono } from 'hono'
+import type { Profile } from '../schemas/profiles-schema'
 import type { AppContext, Env } from '../../worker.js'
 
 interface PublishedProfile {
-  data: { handle: string; name: string; tagline?: string; body: string }
+  data: Profile
   updatedAt?: string
 }
 
@@ -32,12 +33,13 @@ async function findPublished(env: Env, handle: string): Promise<PublishedProfile
       },
       body: JSON.stringify({
         tool: 'records.query',
-        params: { collection: 'profiles', where: { handle, status: 'published' }, limit: 1 },
+        params: { collection: 'profiles', where: { handle }, limit: 1 },
       }),
     }),
   )
   const result = (await res.json()) as { success: boolean; data?: { records: PublishedProfile[] } }
-  return result.success ? result.data?.records[0] : undefined
+  const record = result.success ? result.data?.records[0] : undefined
+  return record && ['published', 'unlisted'].includes(record.data.status) ? record : undefined
 }
 
 const escapeHtml = (s: string) =>
@@ -71,7 +73,18 @@ function profileHead(profile: PublishedProfile, origin: string): string {
 }
 
 export function registerRawRoutes(app: Hono<AppContext>): void {
+  // Exact-handle access only; never expose a privileged list/query endpoint.
+  app.get('/api/public/profiles/:handle{[a-z0-9-]+}', async (c) => {
+    c.header('Cache-Control', 'no-store')
+    const record = await findPublished(c.env, c.req.param('handle'))
+    if (!record) return c.json({ error: 'Not found' }, 404)
+    if (record.data.status === 'unlisted') c.header('X-Robots-Tag', 'noindex')
+    // Deliberately omit ownership and internal record metadata.
+    return c.json({ data: record.data, updatedAt: record.updatedAt })
+  })
+
   app.get('/:file{[a-z0-9-]+\\.md}', async (c) => {
+    c.header('Cache-Control', 'no-store')
     const handle = c.req.param('file').slice(0, -3)
     const record = await findPublished(c.env, handle)
     if (!record) {
@@ -82,6 +95,7 @@ export function registerRawRoutes(app: Hono<AppContext>): void {
       'Cache-Control': 'no-store',
       'Access-Control-Allow-Origin': '*',
     }
+    if (record.data.status === 'unlisted') headers['X-Robots-Tag'] = 'noindex'
     if (record.updatedAt) headers['Last-Modified'] = new Date(record.updatedAt).toUTCString()
     return c.body(record.data.body.endsWith('\n') ? record.data.body : `${record.data.body}\n`, 200, headers)
   })
@@ -106,6 +120,7 @@ export function registerRawRoutes(app: Hono<AppContext>): void {
     headers.delete('etag')
     headers.set('Content-Type', 'text/html; charset=utf-8')
     headers.set('Cache-Control', 'no-store')
+    if (record.data.status === 'unlisted') headers.set('X-Robots-Tag', 'noindex')
     return new Response(html, { status: 200, headers })
   })
 }

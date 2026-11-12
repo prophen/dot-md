@@ -31,7 +31,7 @@ export default function EditIndexPage() {
               <Link to={`/edit/${recordId}`} className="group grid grid-cols-[1fr_auto] items-baseline gap-4 py-3">
                 <span className="group-hover:text-mark">
                   {data.handle}.md
-                  {data.status === 'draft' && <span className="ml-2 text-[11px] text-mark">draft</span>}
+                  <span className="ml-2 text-[11px] text-muted-foreground">{data.status === 'draft' ? 'draft' : data.status === 'published' ? 'published · listed' : 'published · unlisted'}</span>
                 </span>
                 <span className="text-[12px] text-muted-foreground">{age(updatedAt)}</span>
               </Link>

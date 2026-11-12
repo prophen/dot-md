@@ -11,7 +11,8 @@ import type { CollectionSchema } from 'deepspace/schema'
 export const HANDLE_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/
 
 export type ProfileKind = 'person' | 'agent'
-export type ProfileStatus = 'draft' | 'published'
+// `published` retains the original listed state; `unlisted` is public by URL only.
+export type ProfileStatus = 'draft' | 'published' | 'unlisted'
 
 export type Profile = {
   handle: string
@@ -33,7 +34,7 @@ export const profilesSchema: CollectionSchema = {
     {
       name: 'status',
       storage: 'text',
-      interpretation: { kind: 'select', options: ['draft', 'published'] },
+      interpretation: { kind: 'select', options: ['draft', 'published', 'unlisted'] },
     },
   ],
   uniqueOn: ['handle'],
