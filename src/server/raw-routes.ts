@@ -8,7 +8,8 @@
  *
  * Both read the record room with RBAC off (the same channel server actions
  * use), so these routes are the access check: only `status: 'published'`
- * rows leave.
+ * rows leave. Both are `no-store`: a cached copy would outlive an unpublish
+ * or delete, and the check has to run on every request to mean anything.
  */
 
 import type { Hono } from 'hono'
@@ -78,7 +79,7 @@ export function registerRawRoutes(app: Hono<AppContext>): void {
     }
     const headers: Record<string, string> = {
       'Content-Type': 'text/markdown; charset=utf-8',
-      'Cache-Control': 'public, max-age=60',
+      'Cache-Control': 'no-store',
       'Access-Control-Allow-Origin': '*',
     }
     if (record.updatedAt) headers['Last-Modified'] = new Date(record.updatedAt).toUTCString()
@@ -100,8 +101,11 @@ export function registerRawRoutes(app: Hono<AppContext>): void {
       .replace(/<title>[^<]*<\/title>/, '')
       .replace('</head>', `  ${profileHead(record, url.origin)}\n  </head>`)
     const headers = new Headers(shell.headers)
+    // The shell's ETag names the generic page, not this profile's version of it.
     headers.delete('content-length')
+    headers.delete('etag')
     headers.set('Content-Type', 'text/html; charset=utf-8')
+    headers.set('Cache-Control', 'no-store')
     return new Response(html, { status: 200, headers })
   })
 }
