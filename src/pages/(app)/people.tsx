@@ -36,9 +36,8 @@ export default function PeoplePage() {
       </div>
 
       <p id="directory-search-help" className="mb-6 text-[12px] text-muted-foreground">
-        Search listed profiles, including full Markdown. Every space-separated keyword must match
-        literally, ignoring case; partial words count. No semantic matching. Up to five keywords,
-        80 characters each and 200 total. Clear to browse.
+        Search names, skills, and words anywhere in a listed profile. Use up to five keywords;
+        every keyword must appear, and partial words count. Clear to browse.
       </p>
       {query ? <DirectorySearch key={query} query={query} /> : <DirectoryBrowse />}
     </div>
@@ -126,7 +125,7 @@ function DirectorySearch({ query }: { query: string }) {
     </div>}
     {result && <>
       <p aria-live="polite" className="mb-4 text-[12px] text-muted-foreground">
-        Up to 20 results; scans at most 1,000 listed profiles / 20 database pages.
+        Showing up to 20 matches.
         {result.hasMore && ' More matches exist. Narrow your keywords to see other matches.'}
         {result.scanTruncated && ' Scan limit reached: results may be incomplete. Try more specific keywords.'}
       </p>
