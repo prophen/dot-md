@@ -33,6 +33,7 @@ import {
   resolveAuth,
 } from './src/server/http-routes.js'
 import { registerMcpRoutes } from './src/server/mcp-routes.js'
+import { registerSearchRoutes } from './src/server/search-routes.js'
 import { registerRawRoutes } from './src/server/raw-routes.js'
 import { registerRealtimeRoutes } from './src/server/realtime-routes.js'
 
@@ -147,6 +148,7 @@ registerAgent(app, {
 })
 registerMcpRoutes(app)
 registerPlatformProxyRoutes(app)
+registerSearchRoutes(app)
 registerRawRoutes(app)
 registerStaticRoutes(app)
 

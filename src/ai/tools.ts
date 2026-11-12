@@ -5,11 +5,13 @@
  * These are the profile tools in ./profile-tools, not DeepSpace's generic
  * record tools: an agent edits a person.md through the same rules as the
  * editor (handles, starters, summary, Last updated) rather than writing rows.
- * Per-collection RBAC at the DO layer is still the security boundary — every
- * call runs as the verified caller.
+ * Editing runs as the verified caller with collection RBAC. Discovery uses
+ * its own fixed listed-only query and output check, independent of identity.
  */
 
-import type { ToolSet } from 'ai'
+import { tool, type ToolSet } from 'ai'
+import { searchInput, searchProfiles, SEARCH_DESCRIPTION } from '../server/profile-search'
+import type { Env } from '../../worker'
 import type { AgentToolContext, CollectionSchema } from 'deepspace/worker'
 import { buildProfileTools } from './profile-tools'
 
@@ -67,8 +69,15 @@ export function buildSystemPrompt(appName: string, schemas: CollectionSchema[]):
 // ============================================================================
 
 export function buildTools(executor: ToolExecutor, context: AgentToolContext): ToolSet {
-  return buildProfileTools(executor, {
-    userId: context.userId,
-    origin: new URL(context.request.url).origin,
-  })
+  return {
+    ...buildProfileTools(executor, {
+      userId: context.userId,
+      origin: new URL(context.request.url).origin,
+    }),
+    search_profiles: tool({
+      description: SEARCH_DESCRIPTION,
+      inputSchema: searchInput,
+      execute: async (input) => searchProfiles(context.env as Env, new URL(context.request.url).origin, input),
+    }),
+  }
 }
