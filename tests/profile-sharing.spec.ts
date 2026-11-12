@@ -17,7 +17,7 @@ test('profile sharing copies canonical links, handles clipboard denial, and pres
   const body = '# Sharing Tester\n\n> Café & Markdown\n\n- Keep **formatting**  \n\nNo final newline'
   await page.goto('/edit')
   await page.getByLabel('Paste your text').fill(body)
-  await page.getByRole('button', { name: 'Prepare draft' }).click()
+  await page.getByRole('button', { name: 'Review pasted text' }).click()
   await page.getByRole('textbox', { name: 'name', exact: true }).fill(`__test-${Date.now()}__ Sharing`)
   await page.getByRole('textbox', { name: /handle/ }).fill(handle)
   await page.getByRole('button', { name: 'save draft', exact: true }).click()
