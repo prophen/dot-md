@@ -22,6 +22,7 @@ export type Profile = {
   kind: ProfileKind
   body: string
   style?: ProfileStyle
+  draftListed?: boolean
   status: ProfileStatus
 }
 
@@ -33,6 +34,8 @@ export const profilesSchema: CollectionSchema = {
     { name: 'tagline', storage: 'text', interpretation: 'plain', maxLength: 200 },
     { name: 'kind', storage: 'text', interpretation: { kind: 'select', options: ['person', 'agent'] } },
     { name: 'style', storage: 'text', interpretation: { kind: 'select', options: [...PROFILE_STYLES] } },
+    // Remember the directory choice while private; visibility still depends only on status.
+    { name: 'draftListed', storage: 'number', interpretation: { kind: 'boolean' } },
     { name: 'body', storage: 'text', interpretation: 'plain', maxLength: 20000 },
     {
       name: 'status',

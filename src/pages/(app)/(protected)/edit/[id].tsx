@@ -3,7 +3,8 @@
  * right. Saves are explicit so a half-typed line never goes public.
  */
 
-import { useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
+import { UnsavedChanges } from '../../../../components/UnsavedChanges'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth, useMutations, useQuery } from 'deepspace'
 import { useToast } from '@/components/ui'
@@ -16,22 +17,11 @@ import { summarize, touchLastUpdated } from '../../../../lib/profile'
 
 export default function EditPage() {
   const { id = '' } = useParams()
-  const navigate = useNavigate()
   const { userId } = useAuth()
-  const { success, error } = useToast()
   const { records, status } = useQuery<Profile>('profiles')
-  const { ready, putConfirmed, removeConfirmed } = useMutations<Profile>('profiles')
   const record = records.find((r) => r.recordId === id)
 
-  const [body, setBody] = useState<string | null>(null)
-  const [style, setStyle] = useState<ProfileStyle | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [listed, setListed] = useState<boolean | null>(null)
-  useEffect(() => {
-    if (record && body === null) setBody(record.data.body)
-  }, [record, body])
-
-  if (status === 'loading' || (record && body === null)) {
+  if (status === 'loading') {
     return <p className="mx-auto max-w-6xl px-4 py-14 text-muted-foreground sm:px-6">opening…</p>
   }
   if (!record || record.createdBy !== userId) {
@@ -43,11 +33,24 @@ export default function EditPage() {
     )
   }
 
-  const { data } = record
-  const text = body ?? ''
-  const wantsListing = listed ?? data.status === 'published'
-  const selectedStyle = style ?? profileStyle(data.style)
-  const dirty = selectedStyle !== profileStyle(data.style) || text !== data.body || (data.status !== 'draft' && wantsListing !== (data.status === 'published'))
+  return <ProfileEditor key={`${userId}:${id}`} id={id} initial={record.data} />
+}
+
+function ProfileEditor({ id, initial }: { id: string; initial: Profile }) {
+  const navigate = useNavigate()
+  const { success, error } = useToast()
+  const { ready, putConfirmed, removeConfirmed } = useMutations<Profile>('profiles')
+  const [data, setData] = useState(initial)
+  const [body, setBody] = useState(initial.body)
+  const [style, setStyle] = useState<ProfileStyle>(profileStyle(initial.style))
+  const [listed, setListed] = useState(initial.status === 'draft' ? !!initial.draftListed : initial.status === 'published')
+  const [savedListing, setSavedListing] = useState(listed)
+  const [saving, setSaving] = useState(false)
+  const allowLeave = useRef(false)
+  const text = body
+  const wantsListing = listed
+  const selectedStyle = style
+  const dirty = selectedStyle !== profileStyle(data.style) || text !== data.body || listed !== savedListing
 
   async function save(nextStatus = data.status) {
     if (nextStatus !== 'draft') nextStatus = wantsListing ? 'published' : 'unlisted'
@@ -55,9 +58,10 @@ export default function EditPage() {
     const { name, tagline } = summarize(next)
     setSaving(true)
     try {
-      await putConfirmed(id, { body: next, name: name || data.name, tagline, status: nextStatus, style: selectedStyle })
+      await putConfirmed(id, { body: next, name: name || data.name, tagline, status: nextStatus, style: selectedStyle, draftListed: wantsListing })
       setBody(next)
-      setListed(nextStatus === 'draft' && data.status === 'draft' ? listed : null)
+      setData({ ...data, body: next, status: nextStatus, style: selectedStyle, draftListed: wantsListing })
+      setSavedListing(wantsListing)
       success(nextStatus !== 'draft' && data.status === 'draft' ? 'Published' : 'Saved')
     } catch (err) {
       error("Couldn't save", String(err))
@@ -70,6 +74,7 @@ export default function EditPage() {
     if (!window.confirm(`Delete ${data.handle}.md? Its URL will stop working.`)) return
     try {
       await removeConfirmed(id)
+      allowLeave.current = true
       navigate('/edit')
     } catch (err) {
       error("Couldn't delete", String(err))
@@ -80,6 +85,7 @@ export default function EditPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <UnsavedChanges dirty={dirty} allowLeave={allowLeave} />
       <title>{`${data.handle}.md · edit · dot-md`}</title>
       <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border pb-3 text-[12px]">
         <Link to="/edit" className="text-muted-foreground hover:text-foreground">your files</Link>
@@ -132,6 +138,7 @@ export default function EditPage() {
                 if (dirty && !saving) void save()
               }
             }}
+            disabled={saving}
             spellCheck
             maxLength={20000}
             rows={Math.max(24, lineCount + 2)}
@@ -147,7 +154,7 @@ export default function EditPage() {
         </div>
       </div>
 
-      <button onClick={remove} className="mt-10 text-[12px] text-muted-foreground underline underline-offset-2 hover:text-destructive">
+      <button disabled={saving} onClick={remove} className="mt-10 text-[12px] text-muted-foreground underline underline-offset-2 hover:text-destructive">
         delete this file
       </button>
     </div>
