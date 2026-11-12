@@ -15,6 +15,7 @@ import { z } from 'zod/v4'
 import { AgentToolError } from 'deepspace/worker'
 import { HANDLE_RE, type Profile } from '../schemas/profiles-schema'
 import { localDate, rawPath, summarize, touchLastUpdated } from '../lib/profile'
+import { PROFILE_STYLES, profileStyle } from '../lib/profile-style'
 import { OPEN_TO, readOpportunities, writeOpportunities } from '../lib/opportunities'
 import { STARTERS, getStarter, type StarterId } from '../lib/starters'
 
@@ -64,6 +65,7 @@ export function buildProfileTools(executor: Executor, { userId, origin }: Profil
     summary: r.data.tagline,
     status: r.data.status === 'draft' ? 'draft' : 'published',
     listed: r.data.status === 'published',
+    style: profileStyle(r.data.style),
     updatedAt: r.updatedAt,
     page: `${origin}/p/${r.data.handle}`,
     raw: `${origin}${rawPath(r.data.handle)}`,
@@ -198,6 +200,16 @@ export function buildProfileTools(executor: Executor, { userId, origin }: Profil
           data: { body, name: name || record.data.name, tagline },
         })
         return { ...describe({ ...record, data: { ...record.data, body, name: name || record.data.name, tagline } }), saved: true, opportunities: readOpportunities(body) }
+      },
+    }),
+
+    set_profile_style: tool({
+      description: 'Choose the visual style of your profile webpage. Does not change Markdown, publication or directory listing. Existing profiles default to source.',
+      inputSchema: z.object({ handle: handleSchema, style: z.enum(PROFILE_STYLES) }),
+      execute: async ({ handle, style }) => {
+        const record = await ownFile(handle)
+        await call(executor, 'records.update', { collection: 'profiles', recordId: record.recordId, data: { style } })
+        return { ...describe({ ...record, data: { ...record.data, style } }), saved: true }
       },
     }),
 

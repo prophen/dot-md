@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Seo } from '../components/Seo'
-import { SourceView } from '../components/SourceView'
+import { ProfileView } from '../components/ProfileView'
+import { ProfileStylePicker } from '../components/ProfileStylePicker'
+import type { ProfileStyle } from '../lib/profile-style'
 import body from '../examples/person.md?raw'
 import { seo } from '../seo'
 
@@ -8,6 +11,7 @@ const link = 'underline decoration-mark underline-offset-4 hover:text-mark'
 const search = '/api/public/search?query=Postgres%20async&limit=5'
 
 export default function Example() {
+  const [style, setStyle] = useState<ProfileStyle>('source')
   return (
     <>
       <Seo {...seo} path="/example" title="A fictional person.md · dot-md" description="Read a fictional profile, fetch its Markdown, and follow an agent discovery walkthrough. No sign-in required." />
@@ -28,8 +32,9 @@ export default function Example() {
               <a href="/example/person.md" className={link}>Raw Markdown</a>
               <a href="#discovery" className={link}>How discovery works</a>
             </nav>
+            <ProfileStylePicker value={style} onChange={setStyle} help="Try the three profile styles. This only changes the example preview; the raw Markdown stays the same." />
             <article id="profile" className="scroll-mt-6 border-y border-border py-7" aria-label="Rosa’s example profile">
-              <SourceView body={body} />
+              <ProfileView body={body} style={style} handle="example" />
             </article>
             <p className="mt-4 font-serif text-base text-muted-foreground">
               Opportunities are optional. Rosa’s example spells out contracts, collaboration, and working preferences

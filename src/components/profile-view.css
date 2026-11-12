@@ -1,0 +1,43 @@
+/* Profile presentation is local to this panel; it never changes the app theme. */
+.profile-view { min-width: 0; overflow-wrap: anywhere; }
+.profile-view--field-guide,
+.profile-view--registry { padding: clamp(1rem, 4vw, 2.5rem); }
+.profile-view-label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1rem; margin-bottom: 1.5rem; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+.profile-view--field-guide .source-lines,
+.profile-view--registry .source-lines { display: block; }
+.profile-view--field-guide .source-line-number,
+.profile-view--registry .source-line-number,
+.profile-view--field-guide .source-syntax,
+.profile-view--registry .source-syntax,
+.profile-view--field-guide .source-comment,
+.profile-view--registry .source-comment { display: none; }
+.profile-view--field-guide .source-content,
+.profile-view--registry .source-content { line-height: 1.6; }
+.profile-view--field-guide {
+  background: #ece6d6; color: #22301f;
+  --color-mark: #36512d; --color-muted-foreground: #4e5d43;
+  --color-foreground: #22301f; --color-muted: #d8cfb8;
+  --font-serif: 'Spectral', Georgia, serif;
+  --font-mono: 'Libre Franklin', sans-serif;
+  border-top: 3px solid #22301f;
+}
+.profile-view--field-guide .profile-view-label { font-family: 'Libre Franklin', sans-serif; font-weight: 600; border-bottom: 1px solid #9a9c81; padding-bottom: .8rem; }
+.profile-view--field-guide h1 { font-family: 'Spectral', Georgia, serif; font-size: clamp(2rem, 4vw, 3.25rem); font-weight: 700; }
+.profile-view--field-guide h2 { margin: .8rem 0 .4rem; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.profile-view--field-guide p { font-size: 16px; }
+.profile-view--field-guide p.font-mono { font-size: 13px; }
+.profile-view--registry {
+  background: #111; color: #f2f0e8;
+  --color-mark: #ffd23f; --color-muted-foreground: #d2cfc3;
+  --color-foreground: #f2f0e8; --color-muted: #303030;
+  --font-serif: 'Archivo', sans-serif;
+  --font-mono: 'Archivo', sans-serif;
+  border-top: 8px solid #ffd23f;
+}
+.profile-view--registry .profile-view-label { font-family: 'Archivo', sans-serif; font-weight: 700; color: #ffd23f; border-bottom: 2px solid #ffd23f; padding-bottom: .8rem; }
+.profile-view--registry h1 { font-family: 'Archivo', sans-serif; font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; line-height: 1; background: #ffd23f; color: #111; padding: 1rem; margin: .5rem 0 1rem; letter-spacing: -.03em; }
+.profile-view--registry h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; border-top: 2px solid #f2f0e8; padding-top: .65rem; margin-top: .7rem; letter-spacing: .04em; }
+.profile-view--registry p { font-size: 16px; }
+.profile-view--registry p.font-mono { font-size: 14px; }
+.profile-view--registry a { text-decoration-color: #ffd23f; }
+.profile-view a:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }

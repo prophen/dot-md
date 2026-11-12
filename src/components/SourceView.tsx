@@ -23,9 +23,9 @@ function inline(text: string): ReactNode[] {
     if (tok.startsWith('**')) {
       out.push(
         <strong key={i++} className="font-semibold">
-          <span className="text-mark">**</span>
+          <span className="source-syntax text-mark">**</span>
           {tok.slice(2, -2)}
-          <span className="text-mark">**</span>
+          <span className="source-syntax text-mark">**</span>
         </strong>,
       )
     } else if (tok.startsWith('`')) {
@@ -39,7 +39,7 @@ function inline(text: string): ReactNode[] {
       const href = /^[^:/]+@[^/]+$/.test(target) ? `mailto:${target}` : target
       out.push(
         <span key={i++}>
-          <span className="text-mark">&lt;</span>
+          <span className="source-syntax text-mark">&lt;</span>
           {SAFE_HREF.test(href) ? (
             <a href={href} rel="noopener noreferrer nofollow" target="_blank" className="break-all underline decoration-mark underline-offset-2 hover:text-mark">
               {target}
@@ -47,22 +47,22 @@ function inline(text: string): ReactNode[] {
           ) : (
             target
           )}
-          <span className="text-mark">&gt;</span>
+          <span className="source-syntax text-mark">&gt;</span>
         </span>,
       )
     } else if (tok.startsWith('*') || tok.startsWith('_')) {
       out.push(
         <em key={i++}>
-          <span className="not-italic text-mark">{tok[0]}</span>
+          <span className="source-syntax not-italic text-mark">{tok[0]}</span>
           {tok.slice(1, -1)}
-          <span className="not-italic text-mark">{tok[0]}</span>
+          <span className="source-syntax not-italic text-mark">{tok[0]}</span>
         </em>,
       )
     } else {
       const [, label, href] = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(tok)!
       out.push(
         <span key={i++}>
-          <span className="text-mark">[</span>
+          <span className="source-syntax text-mark">[</span>
           {SAFE_HREF.test(href) ? (
             <a href={href} rel="noopener noreferrer nofollow" target="_blank" className="underline decoration-mark underline-offset-2 hover:text-mark">
               {label}
@@ -70,7 +70,7 @@ function inline(text: string): ReactNode[] {
           ) : (
             label
           )}
-          <span className="text-mark">]</span>
+          <span className="source-syntax text-mark">]</span>
         </span>,
       )
     }
@@ -92,7 +92,7 @@ function Line({ text, continues }: { text: string; continues: boolean }) {
   const heading = /^(#{1,3}) (.*)$/.exec(text)
   if (heading) {
     const level = heading[1].length
-    const marker = <span className="text-mark">{heading[1]} </span>
+    const marker = <span className="source-syntax text-mark">{heading[1]} </span>
     if (level === 1) {
       return (
         <h1 className="font-serif text-[clamp(1.75rem,4vw,2.25rem)] font-semibold leading-tight tracking-[-0.01em]">
@@ -114,7 +114,7 @@ function Line({ text, continues }: { text: string; continues: boolean }) {
     const kv = /^([\w][\w '-]{0,30}):(\s.*)?$/.exec(item[3])
     return (
       <p className="font-mono text-[12.5px]" style={{ paddingLeft: `${item[1].length}ch` }}>
-        <span className="text-mark">{item[2]} </span>
+        <span className="source-syntax text-mark">{item[2]} </span>
         {kv ? (
           <>
             <span className="text-muted-foreground">{kv[1]}:</span>
@@ -132,7 +132,7 @@ function Line({ text, continues }: { text: string; continues: boolean }) {
       <p className="whitespace-pre-wrap font-mono text-[12px] text-muted-foreground">
         {text.split('|').map((cell, n, all) => (
           <span key={n}>
-            {n > 0 && <span className="text-mark">|</span>}
+            {n > 0 && <span className="source-syntax text-mark">|</span>}
             {/^[\s:-]+$/.test(cell) || n === 0 || n === all.length - 1 ? cell : <span className="text-foreground">{inline(cell)}</span>}
           </span>
         ))}
@@ -141,14 +141,14 @@ function Line({ text, continues }: { text: string; continues: boolean }) {
   }
 
   if (text.trimStart().startsWith('<!--')) {
-    return <p className="font-mono text-[12px] text-faint">{text}</p>
+    return <p className="source-comment font-mono text-[12px] text-faint">{text}</p>
   }
 
   const quote = /^> ?(.*)$/.exec(text)
   if (quote) {
     return (
       <p className="font-serif text-[16px] italic">
-        <span className="not-italic text-mark">&gt; </span>
+        <span className="source-syntax not-italic text-mark">&gt; </span>
         {inline(quote[1])}
       </p>
     )
@@ -170,16 +170,16 @@ export function SourceView({ body, className }: { body: string; className?: stri
     return cont
   })
   return (
-    <div className={cn('grid grid-cols-[2.25rem_1fr] gap-y-[3px]', className)}>
+    <div className={cn('source-lines grid grid-cols-[2.25rem_1fr] gap-y-[3px]', className)}>
       {lines.map((text, n) => (
         <div key={n} className="contents">
           <span
             aria-hidden
-            className="select-none pr-3 pt-[3px] text-right font-mono text-[11px] leading-[1.75] text-faint"
+            className="source-line-number select-none pr-3 pt-[3px] text-right font-mono text-[11px] leading-[1.75] text-faint"
           >
             {n + 1}
           </span>
-          <div className="min-w-0 break-words leading-[1.75]">
+          <div className="source-content min-w-0 break-words leading-[1.75]">
             <Line text={text} continues={continues[n]} />
           </div>
         </div>

@@ -109,3 +109,15 @@ search can find preferences only on listed profiles. This adds no matching,
 ranking or dedicated preference filters. Drafts remain private; unlisted files
 are accessible by URL but excluded from discovery. The 20,000-character file
 limit still applies and an oversized preference edit is refused, not truncated.
+
+## Profile styles
+
+Choose Source view, Field guide, or Registry in the editor and save to apply
+the presentation to your public page. Existing files default to Source view.
+Style-only saves do not rewrite Markdown or its Last updated stamp, and do
+not change publication or listing. The example page offers a temporary style
+switcher without sign-in.
+
+Agents can read the `style` field and call `set_profile_style` with a handle
+and `source`, `field-guide`, or `registry`; this only updates the owner's
+presentation setting. Raw Markdown and keyword discovery are unchanged.

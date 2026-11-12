@@ -8,7 +8,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth, useMutations, useQuery } from 'deepspace'
 import { useToast } from '@/components/ui'
 import { OpportunityEditor } from '../../../../components/OpportunityEditor'
-import { SourceView } from '../../../../components/SourceView'
+import { ProfileView } from '../../../../components/ProfileView'
+import { ProfileStylePicker } from '../../../../components/ProfileStylePicker'
+import { profileStyle, type ProfileStyle } from '../../../../lib/profile-style'
 import type { Profile } from '../../../../schemas/profiles-schema'
 import { summarize, touchLastUpdated } from '../../../../lib/profile'
 
@@ -22,6 +24,7 @@ export default function EditPage() {
   const record = records.find((r) => r.recordId === id)
 
   const [body, setBody] = useState<string | null>(null)
+  const [style, setStyle] = useState<ProfileStyle | null>(null)
   const [saving, setSaving] = useState(false)
   const [listed, setListed] = useState<boolean | null>(null)
   useEffect(() => {
@@ -43,15 +46,16 @@ export default function EditPage() {
   const { data } = record
   const text = body ?? ''
   const wantsListing = listed ?? data.status === 'published'
-  const dirty = text !== data.body || (data.status !== 'draft' && wantsListing !== (data.status === 'published'))
+  const selectedStyle = style ?? profileStyle(data.style)
+  const dirty = selectedStyle !== profileStyle(data.style) || text !== data.body || (data.status !== 'draft' && wantsListing !== (data.status === 'published'))
 
   async function save(nextStatus = data.status) {
     if (nextStatus !== 'draft') nextStatus = wantsListing ? 'published' : 'unlisted'
-    const next = touchLastUpdated(text)
+    const next = text === data.body ? text : touchLastUpdated(text)
     const { name, tagline } = summarize(next)
     setSaving(true)
     try {
-      await putConfirmed(id, { body: next, name: name || data.name, tagline, status: nextStatus })
+      await putConfirmed(id, { body: next, name: name || data.name, tagline, status: nextStatus, style: selectedStyle })
       setBody(next)
       setListed(nextStatus === 'draft' && data.status === 'draft' ? listed : null)
       success(nextStatus !== 'draft' && data.status === 'draft' ? 'Published' : 'Saved')
@@ -111,6 +115,8 @@ export default function EditPage() {
         <p className="mt-2 text-muted-foreground">Publishing makes your file accessible to anyone with its URL. Directory listing is optional. Changes take effect when you save or publish.</p>
       </div>
 
+      <ProfileStylePicker value={selectedStyle} onChange={setStyle} disabled={saving} />
+
       <OpportunityEditor body={text} onChange={setBody} onError={(message) => error("Couldn’t update opportunities", message)} disabled={saving} />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -137,7 +143,7 @@ export default function EditPage() {
         </label>
         <div className="min-w-0 border-t border-border pt-6 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-4">
           <p className="mb-4 text-[11px] text-muted-foreground">preview</p>
-          <SourceView body={text} />
+          <ProfileView body={text} style={selectedStyle} handle={data.handle} />
         </div>
       </div>
 

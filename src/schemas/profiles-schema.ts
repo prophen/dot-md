@@ -6,6 +6,7 @@
  * never has to parse markdown. Handles are permanent: they're the URL.
  */
 
+import { PROFILE_STYLES, type ProfileStyle } from '../lib/profile-style'
 import type { CollectionSchema } from 'deepspace/schema'
 
 export const HANDLE_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/
@@ -20,6 +21,7 @@ export type Profile = {
   tagline: string
   kind: ProfileKind
   body: string
+  style?: ProfileStyle
   status: ProfileStatus
 }
 
@@ -30,6 +32,7 @@ export const profilesSchema: CollectionSchema = {
     { name: 'name', storage: 'text', interpretation: 'plain', required: true, maxLength: 120 },
     { name: 'tagline', storage: 'text', interpretation: 'plain', maxLength: 200 },
     { name: 'kind', storage: 'text', interpretation: { kind: 'select', options: ['person', 'agent'] } },
+    { name: 'style', storage: 'text', interpretation: { kind: 'select', options: [...PROFILE_STYLES] } },
     { name: 'body', storage: 'text', interpretation: 'plain', maxLength: 20000 },
     {
       name: 'status',
