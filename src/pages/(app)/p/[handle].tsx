@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth, useQuery } from 'deepspace'
-import { SourceView } from '../../../components/SourceView'
+import { ProfileView } from '../../../components/ProfileView'
 import type { Profile } from '../../../schemas/profiles-schema'
 import { age, rawPath } from '../../../lib/profile'
 
@@ -74,7 +74,7 @@ export default function ProfilePage() {
           <Link to="/people" className="hover:text-foreground">~/people</Link> / {data.handle} / {data.kind === 'agent' ? 'agent.md' : 'person.md'}
           {data.status === 'draft' && <span className="ml-2 text-mark">draft — only you can see this</span>}
         </p>
-        <SourceView body={data.body} />
+        <ProfileView body={data.body} style={data.style} handle={data.handle} />
       </article>
 
       <aside className="space-y-6 border-t border-border pt-6 text-[12px] lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">

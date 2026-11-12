@@ -118,6 +118,12 @@ test('MCP: create, update and publish a file with a personal access token', asyn
   await discover(false)
   expect((await api.get(`/api/public/profiles/${handle}`)).status()).toBe(404)
   expect((await call(rpc, 'publish_file', { handle })).body.result.structuredContent.listed).toBe(false)
+  const beforeStyle = (await call(rpc, 'read_file', { handle })).body.result.structuredContent
+  expect((await call(bobRpc, 'set_profile_style', { handle, style: 'registry' })).body.result.isError).toBe(true)
+  expect((await call(rpc, 'set_profile_style', { handle, style: 'unknown' })).body.result.isError).toBe(true)
+  const styled = await call(rpc, 'set_profile_style', { handle, style: 'registry' })
+  expect(styled.body.result.structuredContent).toMatchObject({ style: 'registry', status: 'published', listed: false })
+  expect((await call(rpc, 'read_file', { handle })).body.result.structuredContent.markdown).toBe(beforeStyle.markdown)
   const raw = await api.get(`/${handle}.md`)
   expect(raw.status()).toBe(200)
   expect(await raw.text()).toContain('> Product designer who writes the spec before the mockup.')
