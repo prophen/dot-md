@@ -84,16 +84,38 @@ test('MCP: create, update and publish a file with a personal access token', asyn
   const squat = await call(bobRpc, 'create_file', { handle, name: 'Bob' })
   expect(JSON.parse(squat.body.result.content[0].text)).toMatchObject({ code: 'handle_taken' })
 
+  const discover = async (expected: boolean) => {
+    for (const caller of [rpc, bobRpc]) {
+      const found = await call(caller, 'search_profiles', { query: handle })
+      expect(found.body.result.isError).toBe(false)
+      expect(found.body.result.structuredContent.results.map((r: { handle: string }) => r.handle)).toEqual(expected ? [handle] : [])
+    }
+    const found = await api.get(`/api/public/search?query=${handle}`)
+    expect(found.status()).toBe(200)
+    expect(found.headers()['cache-control']).toBe('no-store')
+    const results = (await found.json()).results
+    expect(results.map((r: { handle: string }) => r.handle)).toEqual(expected ? [handle] : [])
+    if (expected) {
+      expect(results[0].page).toContain(`/p/${handle}`)
+      expect(results[0].raw).toContain(`/${handle}.md`)
+      expect(results[0].evidence[0].excerpt).toContain(handle)
+    }
+  }
+  await discover(false) // owner's draft must not appear
   const published = await call(rpc, 'publish_file', { handle })
   expect(published.body.result.structuredContent).toMatchObject({ status: 'published', listed: false })
+  await discover(false) // public by exact URL is still not discoverable
   const listed = await call(rpc, 'publish_file', { handle, listed: true })
   expect(listed.body.result.structuredContent.listed).toBe(true)
+  await discover(true)
   expect((await call(rpc, 'publish_file', { handle })).body.result.structuredContent.listed).toBe(true)
   const unlisted = await call(rpc, 'publish_file', { handle, listed: false })
   expect(unlisted.body.result.structuredContent).toMatchObject({ status: 'published', listed: false })
+  await discover(false)
   expect((await call(bobRpc, 'read_file', { handle })).body.result.isError).toBe(true)
   expect((await call(bobRpc, 'publish_file', { handle, listed: true })).body.result.isError).toBe(true)
   await call(rpc, 'unpublish_file', { handle })
+  await discover(false)
   expect((await api.get(`/api/public/profiles/${handle}`)).status()).toBe(404)
   expect((await call(rpc, 'publish_file', { handle })).body.result.structuredContent.listed).toBe(false)
   const raw = await api.get(`/${handle}.md`)
