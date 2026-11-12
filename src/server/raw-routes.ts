@@ -13,6 +13,7 @@
  */
 
 import type { Hono } from 'hono'
+import exampleBody from '../examples/person.md?raw'
 import type { Profile } from '../schemas/profiles-schema'
 import type { AppContext, Env } from '../../worker.js'
 
@@ -73,6 +74,12 @@ function profileHead(profile: PublishedProfile, origin: string): string {
 }
 
 export function registerRawRoutes(app: Hono<AppContext>): void {
+  // Static fixture, outside the handle namespace and never stored as a profile.
+  app.get('/example/person.md', (c) => c.body(exampleBody, 200, {
+    'Content-Type': 'text/markdown; charset=utf-8',
+    'Access-Control-Allow-Origin': '*',
+  }))
+
   // Exact-handle access only; never expose a privileged list/query endpoint.
   app.get('/api/public/profiles/:handle{[a-z0-9-]+}', async (c) => {
     c.header('Cache-Control', 'no-store')
