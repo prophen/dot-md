@@ -1,0 +1,88 @@
+import { test, expect } from 'deepspace/testing'
+
+test('paste → review and edit → private draft; duplicate handle can be retried', async ({ users, browser }) => {
+  const [author] = await users(1)
+  const { page } = author
+  const handle = `paste-${Date.now().toString(36)}`
+  const source = '# Test Writer\n\nContributed to docs in 2023.\n\n- Contact: writer@example.test'
+  const edited = source + '\n- Available for documentation projects.'
+  const saved: string[] = []
+  const visitor = await browser.newContext()
+  const anon = await visitor.newPage()
+  try {
+    await page.goto('/edit')
+    await page.getByLabel('Paste your text').fill(source)
+    await page.getByRole('button', { name: 'Prepare draft' }).click()
+    await expect(page).toHaveURL(/\/edit$/)
+    await expect(page.getByLabel('Draft Markdown')).toHaveValue(source)
+    await expect(page.getByRole('textbox', { name: 'name', exact: true })).toHaveValue('')
+    await expect(page.getByRole('textbox', { name: /handle/ })).toHaveValue('')
+    await page.getByLabel('Draft Markdown').fill(edited)
+    await page.getByText('preview', { exact: true }).click()
+    await expect(page.getByRole('heading', { name: '# Test Writer' })).toBeVisible()
+    await page.getByRole('button', { name: 'Back to pasted text' }).click()
+    await expect(page.getByLabel('Paste your text')).toHaveValue(edited)
+    await page.getByRole('button', { name: 'Prepare draft' }).click()
+    await page.getByRole('textbox', { name: 'name', exact: true }).fill('Test Writer')
+    await page.getByRole('textbox', { name: /handle/ }).fill(handle)
+    expect((await anon.request.get(`/${handle}.md`)).status()).toBe(404)
+    await page.getByRole('button', { name: 'save draft', exact: true }).click()
+    await expect(page).toHaveURL(/\/edit\/[^/]+$/)
+    saved.push(page.url())
+    await expect(page.getByRole('textbox', { name: 'Markdown' })).toHaveValue(edited)
+    await expect(page.getByText('draft', { exact: true })).toBeVisible()
+    await expect(page.getByLabel('List me in the directory')).not.toBeChecked()
+    await page.reload()
+    await expect(page.getByRole('textbox', { name: 'Markdown' })).toHaveValue(edited)
+    expect((await anon.request.get(`/${handle}.md`)).status()).toBe(404)
+    expect((await anon.request.get(`/api/public/profiles/${handle}`)).status()).toBe(404)
+    await anon.goto('/people')
+    await expect(anon.getByRole('heading', { name: /~\/people/ })).toBeVisible()
+    await expect(anon.getByRole('link', { name: new RegExp(`${handle}\\.md`) })).toHaveCount(0)
+
+    await page.goto('/edit')
+    await page.getByLabel('Paste your text').fill('A second bio, with no inferred credentials.')
+    await page.getByRole('button', { name: 'Prepare draft' }).click()
+    await page.getByRole('textbox', { name: 'name', exact: true }).fill('Test Writer')
+    await page.getByRole('textbox', { name: /handle/ }).fill(handle)
+    await page.getByRole('button', { name: 'save draft', exact: true }).click()
+    await expect(page.getByRole('alert').filter({ hasText: 'your draft is still here' })).toBeVisible()
+    await expect(page.getByLabel('Draft Markdown')).toHaveValue('A second bio, with no inferred credentials.')
+    await page.getByRole('textbox', { name: /handle/ }).fill(`${handle}-retry`)
+    await page.getByRole('button', { name: 'save draft', exact: true }).click()
+    await expect(page).toHaveURL(/\/edit\/[^/]+$/)
+    saved.push(page.url())
+    await expect(page.getByText('draft', { exact: true })).toBeVisible()
+  } finally {
+    await visitor.close()
+    page.on('dialog', (dialog) => dialog.accept())
+    for (const url of saved) {
+      await page.goto(url)
+      await page.getByRole('button', { name: 'delete this file' }).click()
+      await expect(page).toHaveURL(/\/edit$/)
+    }
+  }
+})
+
+test('empty and oversized paste can be corrected; review validation keeps edits', async ({ users }) => {
+  const [{ page }] = await users(1)
+  await page.goto('/edit')
+  await page.getByRole('button', { name: 'Prepare draft' }).click()
+  await expect(page.getByRole('alert')).toContainText('Paste some')
+  await page.getByLabel('Paste your text').fill('x'.repeat(20_001))
+  await page.getByRole('button', { name: 'Prepare draft' }).click()
+  await expect(page.getByRole('alert')).toContainText('nothing has been truncated')
+  await expect(page.getByLabel('Paste your text')).toHaveValue('x'.repeat(20_001))
+  await page.getByLabel('Paste your text').fill('Bio with exactly the supplied facts.')
+  await page.getByRole('button', { name: 'Prepare draft' }).click()
+  await page.getByRole('textbox', { name: 'name', exact: true }).fill('Validation Fixture')
+  await page.getByRole('textbox', { name: /handle/ }).fill('validation-fixture')
+  await page.getByLabel('Draft Markdown').fill(' ')
+  await page.getByRole('button', { name: 'save draft', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('Paste some')
+  await expect(page).toHaveURL(/\/edit$/)
+  await page.getByLabel('Draft Markdown').fill('y'.repeat(20_001))
+  await page.getByRole('button', { name: 'save draft', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('20,000 characters or fewer')
+  await expect(page.getByLabel('Draft Markdown')).toHaveValue('y'.repeat(20_001))
+})

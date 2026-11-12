@@ -13,6 +13,7 @@ test('starter → draft → publish → public page, directory, and raw file', a
   const handle = `e2e-${Date.now().toString(36)}`
 
   await page.goto('/edit')
+  await page.getByRole('button', { name: 'Use a starter' }).click()
   await page.getByLabel('Software engineer').check()
   await page.getByRole('textbox', { name: 'name', exact: true }).fill('Test Engineer')
   await page.getByRole('textbox', { name: /handle/ }).fill(handle)
