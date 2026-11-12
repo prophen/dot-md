@@ -14,7 +14,7 @@ test('starter → draft → publish → public page, directory, and raw file', a
 
   await page.goto('/edit')
   await page.getByLabel('Software engineer').check()
-  await page.getByRole('textbox', { name: 'name' }).fill('Test Engineer')
+  await page.getByRole('textbox', { name: 'name', exact: true }).fill('Test Engineer')
   await page.getByRole('textbox', { name: /handle/ }).fill(handle)
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/1-new-file.png`, fullPage: true })
   await page.getByRole('button', { name: `touch ${handle}.md` }).click()
