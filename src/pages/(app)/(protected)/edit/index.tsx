@@ -20,7 +20,7 @@ export default function EditIndexPage() {
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
       <title>Your files · dot-md</title>
       <h1 className="mb-6 border-b border-border pb-3 text-[12px] tracking-wide text-muted-foreground">
-        ~/you{status === 'ready' && <> · {mine.length} {mine.length === 1 ? 'file' : 'files'}</>}
+        your files{status === 'ready' && <> · {mine.length}</>}
       </h1>
 
       {status === 'ready' && mine.length > 0 && (

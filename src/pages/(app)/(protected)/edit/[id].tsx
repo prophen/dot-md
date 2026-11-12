@@ -90,7 +90,7 @@ export default function EditPage() {
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <title>{`${data.handle}.md · edit · dot-md`}</title>
       <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border pb-3 text-[12px]">
-        <Link to="/edit" className="text-muted-foreground hover:text-foreground">~/you</Link>
+        <Link to="/edit" className="text-muted-foreground hover:text-foreground">your files</Link>
         <span>
           {data.handle}.md{dirty && <span className="text-mark"> ●</span>}
         </span>

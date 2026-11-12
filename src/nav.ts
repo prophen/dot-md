@@ -17,7 +17,7 @@ export interface NavItem {
 
 export const nav: NavItem[] = [
   { path: '/people', label: '~/people' },
-  { path: '/edit', label: 'edit' },
+  { path: '/edit', label: 'your files' },
   // The /api-status debug page still exists — add
   // `{ path: '/api-status', label: 'API Status', devOnly: true }` to surface it.
   // ── Features add nav items below this line ──
