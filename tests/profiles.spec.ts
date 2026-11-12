@@ -49,6 +49,7 @@ test('starter → draft → publish → public page, directory, and raw file', a
   const raw = await anon.request.get(`/${handle}.md`)
   expect(raw.status()).toBe(200)
   expect(raw.headers()['content-type']).toContain('text/markdown')
+  expect(raw.headers()['cache-control']).toBe('no-store')
   const text = await raw.text()
   expect(text).toContain('> Backend engineer working on payment systems.')
   const d = new Date()
