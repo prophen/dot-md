@@ -12,7 +12,7 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { AuthOverlay, useAuthProfileReady, signOut } from 'deepspace'
 import { ChevronDown, LogOut, Menu, X } from 'lucide-react'
-import { APP_NAME } from '../constants'
+import { APP_NAME, AUTH_OVERLAY_COPY } from '../constants'
 import type { Role } from '../constants'
 import { nav } from '../nav'
 import { cn } from '../lib/utils'
@@ -138,7 +138,7 @@ export default function Navigation() {
               onClick={() => setShowAuthModal(true)}
               className="border border-foreground px-2.5 py-1 text-[12.5px] text-foreground hover:bg-foreground hover:text-background"
             >
-              Sign in
+              Sign up / Sign in
             </button>
           )}
 
@@ -159,7 +159,7 @@ export default function Navigation() {
         )}
       </nav>
 
-      {showAuthModal && <AuthOverlay onClose={() => setShowAuthModal(false)} />}
+      {showAuthModal && <AuthOverlay {...AUTH_OVERLAY_COPY} onClose={() => setShowAuthModal(false)} />}
     </>
   )
 }

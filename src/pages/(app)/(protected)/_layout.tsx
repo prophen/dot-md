@@ -17,6 +17,7 @@ import { useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { AuthGate, AuthOverlay } from 'deepspace'
 import { Button } from '@/components/ui'
+import { AUTH_OVERLAY_COPY } from '@/constants'
 
 export default function ProtectedLayout() {
   return (
@@ -32,12 +33,13 @@ function SignedOutPanel() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-6 py-20">
       <div className="w-full max-w-sm rounded-lg border border-border bg-card p-8 text-center">
-        <h1 className="text-lg font-semibold text-foreground">Sign in to continue</h1>
+        <h1 className="text-lg font-semibold text-foreground">Create your account to continue</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          This page is only available to signed-in users.
+          Writing a file needs an account. It's free and takes one click with GitHub or Google.
+          Already have one? Sign in the same way.
         </p>
         <Button className="mt-6 w-full" onClick={() => setShowAuthModal(true)}>
-          Sign in
+          Sign up / Sign in
         </Button>
         <Link
           to="/"
@@ -47,7 +49,7 @@ function SignedOutPanel() {
         </Link>
       </div>
 
-      {showAuthModal && <AuthOverlay onClose={() => setShowAuthModal(false)} />}
+      {showAuthModal && <AuthOverlay {...AUTH_OVERLAY_COPY} onClose={() => setShowAuthModal(false)} />}
     </div>
   )
 }

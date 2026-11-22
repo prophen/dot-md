@@ -27,9 +27,17 @@ export default function Landing() {
           <span className="text-[13px] font-semibold">
             <span className="text-mark">.</span>md
           </span>
-          <Link to="/people" className="text-[12.5px] text-muted-foreground hover:text-foreground">
-            ~/people
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/people" className="text-[12.5px] text-muted-foreground hover:text-foreground">
+              ~/people
+            </Link>
+            <Link
+              to="/edit"
+              className="border border-foreground px-2.5 py-1 text-[12.5px] text-foreground hover:bg-foreground hover:text-background"
+            >
+              Sign up / Sign in
+            </Link>
+          </div>
         </header>
 
         <section className="grid gap-12 py-16 sm:py-24 lg:grid-cols-[1.1fr_1fr] lg:items-center">

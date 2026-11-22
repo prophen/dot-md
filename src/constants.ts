@@ -19,3 +19,13 @@ export const SCOPE_ID = `app:${APP_ID}`
 
 /** Roles and display config — imported from SDK (single source of truth) */
 export { ROLES, ROLE_CONFIG, type Role } from 'deepspace'
+
+/** Copy for the SDK's <AuthOverlay>. Its defaults ("Sign in to DeepSpace")
+ *  read as returning-users-only, but the GitHub/Google buttons create an
+ *  account on first use — so say that. The overlay's email form only signs in
+ *  existing accounts, hence the pointer to GitHub/Google for new people. */
+export const AUTH_OVERLAY_COPY = {
+  title: 'Sign up or sign in',
+  description:
+    'New here? Continue with GitHub or Google and your account is created on the spot. Email sign-in is for existing accounts.',
+} as const
