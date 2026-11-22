@@ -81,7 +81,7 @@ export default function Example() {
             <p className="text-[11px] text-muted-foreground">03 · make it yours</p>
             <h2 id="start-heading" className="mt-2 font-serif text-3xl font-semibold">Start with what you already wrote.</h2>
             <p className="mt-4 font-serif text-base">
-              Sign in, paste a bio or README, then review the Markdown. Or choose a starter.
+              Sign up (or sign in), paste a bio or README, then review the Markdown. Or choose a starter.
               Your file stays a private draft until you publish it. Add opportunities only if you want to.
             </p>
             <p className="mt-5 text-[13px]"><Link to="/edit" className={link}>Paste text or choose a starter →</Link></p>
